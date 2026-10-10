@@ -244,13 +244,24 @@ func (a *Admin) GetSettings(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]any{
 		"system_prompt": systemPrompt,
 		"upstream":      a.Cfg.UpstreamBaseURL,
+		"prompt_cache":  a.promptCache(),
 	})
+}
+
+// promptCache reports the effective prompt-cache setting: the database override
+// when present, otherwise the environment default.
+func (a *Admin) promptCache() bool {
+	if v, err := a.Store.GetSetting("prompt_cache", ""); err == nil && v != "" {
+		return v == "true" || v == "on"
+	}
+	return a.Cfg.PromptCache
 }
 
 // PutSettings updates editable settings.
 func (a *Admin) PutSettings(c echo.Context) error {
 	var body struct {
 		SystemPrompt string `json:"system_prompt"`
+		PromptCache  *bool  `json:"prompt_cache"`
 	}
 	if err := c.Bind(&body); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]any{"error": "invalid body"})
@@ -261,7 +272,16 @@ func (a *Admin) PutSettings(c echo.Context) error {
 	if err := a.Store.SetSetting("system_prompt", body.SystemPrompt); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]any{"error": err.Error()})
 	}
-	return c.JSON(http.StatusOK, map[string]any{"ok": true})
+	if body.PromptCache != nil {
+		v := "false"
+		if *body.PromptCache {
+			v = "true"
+		}
+		if err := a.Store.SetSetting("prompt_cache", v); err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]any{"error": err.Error()})
+		}
+	}
+	return c.JSON(http.StatusOK, map[string]any{"ok": true, "prompt_cache": a.promptCache()})
 }
 
 // ---- playground ----

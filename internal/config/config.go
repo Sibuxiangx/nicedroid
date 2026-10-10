@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -20,6 +21,9 @@ type Config struct {
 	QuotaPollInterval time.Duration
 	LogRetentionDays  int
 	RequestTimeout    time.Duration
+	// PromptCache injects Anthropic cache breakpoints. On by default: without
+	// them every turn of an agent loop is billed as fresh input.
+	PromptCache bool
 }
 
 // Getenv reads an env var with a default.
@@ -44,6 +48,9 @@ func Load() Config {
 	if err != nil || timeout <= 0 {
 		timeout = 600
 	}
+	// Default on: the proxy exists to serve agent loops, and an uncached loop
+	// pays full input price on every turn. NICEDROID_PROMPT_CACHE=off disables it.
+	promptCache := !isOff(Getenv("NICEDROID_PROMPT_CACHE", "on"))
 	return Config{
 		Listen:            Getenv("NICEDROID_LISTEN", ":3000"),
 		DBPath:            Getenv("NICEDROID_DB", "nicedroid.db"),
@@ -55,7 +62,17 @@ func Load() Config {
 		QuotaPollInterval: time.Duration(poll) * time.Second,
 		LogRetentionDays:  ret,
 		RequestTimeout:    time.Duration(timeout) * time.Second,
+		PromptCache:       promptCache,
 	}
+}
+
+// isOff reports whether a boolean-ish env value means "disabled".
+func isOff(v string) bool {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "off", "false", "no", "0", "disabled":
+		return true
+	}
+	return false
 }
 
 // DefaultDroidSystemPrompt is the gateway's required content gate: every

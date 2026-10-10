@@ -11,12 +11,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
 import { Play, Save } from "lucide-react"
 import { toast } from "sonner"
 
 export function SettingsPage() {
   const [systemPrompt, setSystemPrompt] = useState("")
   const [upstream, setUpstream] = useState("")
+  const [promptCache, setPromptCache] = useState(true)
   const [models, setModels] = useState<ModelView[]>([])
   const [savingPrompt, setSavingPrompt] = useState(false)
 
@@ -35,6 +37,7 @@ export function SettingsPage() {
       .then((s) => {
         setSystemPrompt(s.system_prompt)
         setUpstream(s.upstream)
+        setPromptCache(s.prompt_cache)
       })
       .catch(() => toast.error("加载设置失败"))
     apiClient
@@ -51,8 +54,8 @@ export function SettingsPage() {
   async function savePrompt() {
     setSavingPrompt(true)
     try {
-      await apiClient.putSettings(systemPrompt)
-      toast.success("系统提示词已保存")
+      await apiClient.putSettings(systemPrompt, promptCache)
+      toast.success("设置已保存")
     } catch {
       toast.error("保存失败（不能为空）")
     } finally {
@@ -115,6 +118,35 @@ export function SettingsPage() {
           </div>
           <p className="text-xs text-muted-foreground">
             上游：<code>{upstream}</code>
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">提示词缓存</CardTitle>
+          <CardDescription>
+            Anthropic 系模型只在请求带 cache_control 断点时才缓存前缀，否则每一轮都按全新输入计费。
+            开启后代理会自动在 tools / system / 最后一条消息上打断点；客户端自己带了断点的请求不会被改动。
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-3">
+            <Switch
+              checked={promptCache}
+              onCheckedChange={(v) => {
+                setPromptCache(v)
+                apiClient
+                  .putSettings(systemPrompt, v)
+                  .then(() => toast.success(v ? "已开启提示词缓存" : "已关闭提示词缓存"))
+                  .catch(() => toast.error("保存失败"))
+              }}
+            />
+            <span className="text-sm">{promptCache ? "已开启" : "已关闭"}</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            缓存写入按 1.25× 计费、命中按模型自身的 cache read 倍率计费（多数模型约 0.1×）。
+            对多轮对话和 agent 循环通常大幅省钱；一次性短请求收益有限。
           </p>
         </CardContent>
       </Card>

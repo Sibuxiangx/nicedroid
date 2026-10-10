@@ -61,7 +61,18 @@ func (h *Handler) messagesPassthrough(c echo.Context, raw map[string]any, m conf
 	clientKey := clientKeyFromContext(c)
 	stream, _ := raw["stream"].(bool)
 
+	// Cache breakpoints are added before marshalling: Anthropic bills an
+	// unmarked prefix as fresh input on every turn, which makes an agent loop
+	// prohibitively expensive. Requests that already carry a marker are left as
+	// the caller wrote them.
 	body := injectAnthropicSystem(raw, h.systemPrompt())
+	if h.promptCacheEnabled() {
+		injectCacheBreakpoints(body)
+	}
+	reqBody, err := json.Marshal(body)
+	if err != nil {
+		return anthropicError(c, http.StatusBadRequest, "invalid_request_error", "cannot encode request")
+	}
 
 	ctx := c.Request().Context()
 	if h.Cfg.RequestTimeout > 0 {
@@ -75,7 +86,7 @@ func (h *Handler) messagesPassthrough(c echo.Context, raw map[string]any, m conf
 		return anthropicError(c, http.StatusServiceUnavailable, "api_error", "no upstream API key configured")
 	}
 	provider := h.resolveProvider(m)
-	resp, err := h.Client.Do(ctx, upstream.Request{Path: upstream.PathMessages, APIKey: key.Key, Body: body, Stream: stream}, provider)
+	resp, err := h.Client.Do(ctx, upstream.Request{Path: upstream.PathMessages, APIKey: key.Key, Body: reqBody, Stream: stream}, provider)
 	if err != nil {
 		return anthropicError(c, http.StatusBadGateway, "api_error", "upstream error: "+err.Error())
 	}
@@ -136,7 +147,7 @@ func (h *Handler) messagesPassthrough(c echo.Context, raw map[string]any, m conf
 
 // injectAnthropicSystem ensures the Droid system prompt leads the top-level
 // system field (the gateway content gate requires it).
-func injectAnthropicSystem(raw map[string]any, prompt string) []byte {
+func injectAnthropicSystem(raw map[string]any, prompt string) map[string]any {
 	out := make(map[string]any, len(raw))
 	for k, v := range raw {
 		out[k] = v
@@ -151,8 +162,7 @@ func injectAnthropicSystem(raw map[string]any, prompt string) []byte {
 		sys = append(sys, cur...)
 	}
 	out["system"] = sys
-	b, _ := json.Marshal(out)
-	return b
+	return out
 }
 
 // ---------------- OpenAI Responses inbound ----------------

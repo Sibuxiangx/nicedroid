@@ -285,7 +285,11 @@ func (h *Handler) buildUpstreamBody(req *upstream.ChatRequest, model config.Mode
 	r.ReasoningEffort = config.MapEffort(provider, r.ReasoningEffort)
 	switch model.Family {
 	case config.FamilyMessages:
-		return upstream.ToMessages(&r, h.systemPrompt(), 8192), nil
+		body := upstream.ToMessages(&r, h.systemPrompt(), 8192)
+		if h.promptCacheEnabled() {
+			injectCacheBreakpoints(body)
+		}
+		return body, nil
 	case config.FamilyResponses:
 		return upstream.ToResponses(&r, h.systemPrompt()), nil
 	case config.FamilyGoogle:
@@ -316,6 +320,16 @@ func (h *Handler) systemPrompt() string {
 		return p
 	}
 	return h.Cfg.DroidSystemPrompt
+}
+
+// promptCacheEnabled reports whether prompt-cache breakpoints are injected into
+// Anthropic-family requests. The database setting wins over the environment so
+// it can be toggled without a redeploy.
+func (h *Handler) promptCacheEnabled() bool {
+	if v, err := h.Store.GetSetting("prompt_cache", ""); err == nil && v != "" {
+		return v == "true" || v == "on"
+	}
+	return h.Cfg.PromptCache
 }
 
 // openAIError renders an OpenAI-style error.

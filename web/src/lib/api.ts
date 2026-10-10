@@ -307,11 +307,11 @@ export const apiClient = {
     ),
   logs: (params: URLSearchParams) => api<{ logs: RequestLog[]; total: number }>(`/logs?${params}`),
   settings: () =>
-    api<{ system_prompt: string; upstream: string }>("/settings"),
-  putSettings: (systemPrompt: string) =>
-    api<{ ok: boolean }>("/settings", {
+    api<{ system_prompt: string; upstream: string; prompt_cache: boolean }>("/settings"),
+  putSettings: (systemPrompt: string, promptCache?: boolean) =>
+    api<{ ok: boolean; prompt_cache: boolean }>("/settings", {
       method: "PUT",
-      body: JSON.stringify({ system_prompt: systemPrompt }),
+      body: JSON.stringify({ system_prompt: systemPrompt, prompt_cache: promptCache }),
     }),
   playground: (model: string, message: string) =>
     api<{ model: string; text: string; raw_usage: unknown }>("/playground", {
