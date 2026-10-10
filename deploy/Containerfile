@@ -1,0 +1,26 @@
+# nicedroid — minimal runtime image.
+#
+# The server is a static Go binary (pure-Go SQLite, no cgo), so the runtime needs
+# nothing but the executable: no shell, no package manager, no libc. Building from
+# scratch also means the image build pulls no base image, which keeps it working
+# on a host with no registry access.
+#
+# Build context must contain: nicedroid, ca-certificates.crt, zoneinfo/
+# See deploy/README.md for the one-shot commands.
+FROM scratch
+
+COPY nicedroid /nicedroid
+
+# Outbound TLS to api.factory.ai needs a trust store.
+COPY ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+
+# Go falls back to UTC without tzdata; copying it keeps log timestamps local.
+COPY zoneinfo /usr/share/zoneinfo
+
+EXPOSE 3000
+VOLUME /data
+
+ENV NICEDROID_LISTEN=:3000 \
+    NICEDROID_DB=/data/nicedroid.db
+
+ENTRYPOINT ["/nicedroid"]

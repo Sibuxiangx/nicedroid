@@ -219,6 +219,15 @@ Factory 网关根据 `x-api-provider` 请求头决定由哪家后端承载。后
 | `NICEDROID_REQUEST_TIMEOUT_SECONDS` | `600`                    | 上游请求超时             |
 | `NICEDROID_LOG_RETENTION_DAYS`      | `30`                     | 请求日志保留天数         |
 
+## 部署
+
+[`deploy/`](deploy/README.md) 提供了在服务器上用 Podman + systemd 运行的方案：
+16.5 MB 的 `FROM scratch` 镜像（二进制是静态的，不需要 libc 和 shell）、systemd unit，
+以及反向代理配置。
+
+交叉编译 → 传二进制 → 重建镜像 → 重启 unit。需要长期保留的状态只有挂载卷里的那个
+SQLite 文件。
+
 ## 工作原理
 
 两条约束决定了整个代理的形态：

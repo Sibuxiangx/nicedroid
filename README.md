@@ -250,6 +250,15 @@ All configuration is environment-driven.
 | `NICEDROID_REQUEST_TIMEOUT_SECONDS`  | `600`                    | Upstream request timeout                 |
 | `NICEDROID_LOG_RETENTION_DAYS`       | `30`                     | Request log retention                    |
 
+## Deployment
+
+[`deploy/`](deploy/README.md) has a Podman + systemd setup for running this on a
+server: a 16.5 MB `FROM scratch` image (the binary is static, so there is no libc
+or shell to ship), the systemd unit, and the reverse-proxy configuration.
+
+Cross-compile, copy the binary, rebuild the image, restart the unit — the SQLite
+file in the mounted volume is the only state that has to survive.
+
 ## How it works
 
 Two constraints shape the whole proxy:

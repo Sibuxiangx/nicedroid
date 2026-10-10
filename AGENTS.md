@@ -138,6 +138,7 @@ internal/api/        proxy endpoints, SSE converters (all format pairs), usage c
 internal/admin/      admin JSON API, provider pinning, streaming benchmark, JWT auth
 web/                 embedded admin UI (React + Vite + shadcn/ui); web/dist is committed
 web/assets-source/   source artwork the icons are cropped from
+deploy/              Podman image + systemd unit for running this on a server
 .github/workflows/   daily refresh of the model catalog
 ```
 
