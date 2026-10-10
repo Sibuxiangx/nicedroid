@@ -95,12 +95,14 @@ func main() {
 	// Admin API.
 	adminAPI.Register(e.Group("/admin/api"))
 
-	// Admin UI (embedded SPA).
+	// Admin UI (embedded SPA). The single-segment route serves root-level static
+	// assets (favicon.ico, logo.webp, apple-touch-icon.png, ...) and any
+	// unknown one-segment page; more specific routes registered above win.
 	e.GET("/", echo.WrapHandler(web.Handler()))
+	e.GET("/:file", echo.WrapHandler(web.Handler()))
 	e.GET("/admin", echo.WrapHandler(web.Handler()))
 	e.GET("/admin/*", echo.WrapHandler(web.Handler()))
 	e.GET("/assets/*", echo.WrapHandler(web.Handler()))
-	e.GET("/favicon.ico", echo.WrapHandler(web.Handler()))
 
 	go func() {
 		log.Printf("listening on %s (upstream: %s, db: %s)", cfg.Listen, cfg.UpstreamBaseURL, cfg.DBPath)

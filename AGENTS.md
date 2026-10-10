@@ -130,6 +130,7 @@ internal/router/     quota polling and weighted key selection
 internal/api/        proxy endpoints, SSE converters (all format pairs), usage capture
 internal/admin/      admin JSON API, provider pinning, streaming benchmark, JWT auth
 web/                 embedded admin UI (React + Vite + shadcn/ui); web/dist is committed
+web/assets-source/   source artwork the icons are cropped from
 .github/workflows/   daily refresh of the model catalog
 ```
 
@@ -194,6 +195,19 @@ round, so keep rounds low while iterating.
   cannot be gamed that way, so it is what ranks providers.
 
 Do not "unify" these two.
+
+## Icons
+
+The admin icons are a 1:1 crop of the artwork in `web/assets-source/`, generated
+by `tools/make-icons.sh` (ImageMagick 7 + cwebp). Do not hand-edit the files in
+`web/public/` — adjust the `CROP` at the top of the script and rerun it. The
+script is deterministic, so a rerun on an unchanged crop produces identical
+bytes and leaves no diff.
+
+`favicon.ico` carries 16/32/48 for browsers; `logo.webp` is the rounded 128px
+mark used in the app bar and on the login card, with its corners baked in so the
+`<img>` needs no CSS mask. `apple-touch-icon.png` is deliberately opaque: iOS
+composites transparency onto black.
 
 ## Conventions
 

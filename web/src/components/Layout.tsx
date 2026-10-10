@@ -80,6 +80,13 @@ export function Layout({
     <div className="min-h-screen">
       {/* Appbar */}
       <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-background px-4">
+        <img
+          src="/logo.webp"
+          alt=""
+          width={28}
+          height={28}
+          className="h-7 w-7 shrink-0 rounded-md"
+        />
         <span className="text-base font-semibold tracking-tight">nicedroid</span>
         {standardMax !== null && (
           <Badge

@@ -28,7 +28,14 @@ export function Login({ onSuccess }: { onSuccess: (username: string) => void }) 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40">
       <Card className="w-full max-w-sm">
-        <CardHeader>
+        <CardHeader className="items-center text-center">
+          <img
+            src="/logo.webp"
+            alt=""
+            width={64}
+            height={64}
+            className="mb-1 h-16 w-16 rounded-xl"
+          />
           <CardTitle className="text-2xl">nicedroid</CardTitle>
           <CardDescription>管理控制台登录</CardDescription>
         </CardHeader>
