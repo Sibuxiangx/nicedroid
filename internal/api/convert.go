@@ -64,7 +64,7 @@ func (s *openAIToAnthropicStream) messageStart() []byte {
 			"content":       []any{},
 			"stop_reason":   nil,
 			"stop_sequence": nil,
-			"usage":         map[string]any{"input_tokens": 0, "output_tokens": 0},
+			"usage":         usageToAnthropic(usageInfo{}),
 		},
 	}
 	return sseFrame("message_start", rawJSON(payload))
@@ -205,16 +205,10 @@ func (s *openAIToAnthropicStream) Finalize() [][]byte {
 			"index": idx,
 		})))
 	}
-	usage := map[string]any{"input_tokens": 0, "output_tokens": 0}
-	if s.usage != nil {
-		if v, ok := s.usage["prompt_tokens"].(float64); ok {
-			usage["input_tokens"] = int(v)
-		}
-		if v, ok := s.usage["completion_tokens"].(float64); ok {
-			usage["output_tokens"] = int(v)
-		}
-	}
 	stop := mapFinishReason(s.finish)
+	// Anthropic reports input_tokens excluding cache reads, so the OpenAI
+	// prompt_tokens has to be split before it can be handed over.
+	usage := usageToAnthropic(usageFromOpenAI(s.usage))
 	frames = append(frames, sseFrame("message_delta", rawJSON(map[string]any{
 		"type":  "message_delta",
 		"delta": map[string]any{"stop_reason": stop, "stop_sequence": nil},
@@ -362,15 +356,9 @@ func mapAnthropicStop(sr string) string {
 
 // Finalize emits the closing chunk with usage and finish_reason.
 func (s *anthropicToOpenAIStream) Finalize() [][]byte {
-	usage := map[string]any(nil)
+	var usage map[string]any
 	if s.usage != nil {
-		p, _ := numToInt(s.usage["input_tokens"])
-		c, _ := numToInt(s.usage["output_tokens"])
-		usage = map[string]any{
-			"prompt_tokens":     p,
-			"completion_tokens": c,
-			"total_tokens":      p + c,
-		}
+		usage = usageToOpenAI(usageFromAnthropic(s.usage))
 	}
 	fr := s.finish
 	if fr == "" {
@@ -447,13 +435,7 @@ func (s *responsesToOpenAIStream) Finalize() [][]byte {
 	}
 	var usage map[string]any
 	if s.usage != nil {
-		in, _ := numToInt(s.usage["input_tokens"])
-		out, _ := numToInt(s.usage["output_tokens"])
-		usage = map[string]any{
-			"prompt_tokens":     in,
-			"completion_tokens": out,
-			"total_tokens":      in + out,
-		}
+		usage = usageToOpenAI(usageFromResponses(s.usage))
 	}
 	frames = append(frames, mustChunk(s.msgID, s.model, map[string]any{}, "stop", usage))
 	frames = append(frames, []byte("data: [DONE]\n\n"))
@@ -521,13 +503,7 @@ func anthropicToOpenAIResponse(msg map[string]any, model string) map[string]any 
 		}},
 	}
 	if u, ok := msg["usage"].(map[string]any); ok {
-		in, _ := numToInt(u["input_tokens"])
-		out_, _ := numToInt(u["output_tokens"])
-		out["usage"] = map[string]any{
-			"prompt_tokens":     in,
-			"completion_tokens": out_,
-			"total_tokens":      in + out_,
-		}
+		out["usage"] = usageToOpenAI(usageFromAnthropic(u))
 	}
 	return out
 }
@@ -589,13 +565,7 @@ func responsesToOpenAIResponse(resp map[string]any, model string) map[string]any
 		}},
 	}
 	if u, ok := resp["usage"].(map[string]any); ok {
-		in, _ := numToInt(u["input_tokens"])
-		out_, _ := numToInt(u["output_tokens"])
-		out["usage"] = map[string]any{
-			"prompt_tokens":     in,
-			"completion_tokens": out_,
-			"total_tokens":      in + out_,
-		}
+		out["usage"] = usageToOpenAI(usageFromResponses(u))
 	}
 	return out
 }
@@ -660,11 +630,9 @@ func openAIToAnthropicResponse(comp map[string]any, model string) map[string]any
 		"stop_sequence": nil,
 	}
 	if u, ok := comp["usage"].(map[string]any); ok {
-		in, _ := numToInt(u["prompt_tokens"])
-		out_, _ := numToInt(u["completion_tokens"])
-		out["usage"] = map[string]any{"input_tokens": in, "output_tokens": out_}
+		out["usage"] = usageToAnthropic(usageFromOpenAI(u))
 	} else {
-		out["usage"] = map[string]any{"input_tokens": 0, "output_tokens": 0}
+		out["usage"] = usageToAnthropic(usageInfo{})
 	}
 	return out
 }
@@ -726,9 +694,7 @@ func openAIToResponsesResponse(comp map[string]any, model string) map[string]any
 		"output":     output,
 	}
 	if u, ok := comp["usage"].(map[string]any); ok {
-		in, _ := numToInt(u["prompt_tokens"])
-		out_, _ := numToInt(u["completion_tokens"])
-		out["usage"] = map[string]any{"input_tokens": in, "output_tokens": out_, "total_tokens": in + out_}
+		out["usage"] = usageToResponses(usageFromOpenAI(u))
 	}
 	return out
 }
@@ -1006,9 +972,7 @@ func (s *openAIToResponsesStream) Finalize() [][]byte {
 	}
 	usage := map[string]any(nil)
 	if s.usage != nil {
-		p, _ := numToInt(s.usage["prompt_tokens"])
-		c, _ := numToInt(s.usage["completion_tokens"])
-		usage = map[string]any{"input_tokens": p, "output_tokens": c, "total_tokens": p + c}
+		usage = usageToResponses(usageFromOpenAI(s.usage))
 	}
 	resp := map[string]any{
 		"id":         s.respID,
