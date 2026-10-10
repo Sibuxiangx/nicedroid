@@ -28,6 +28,26 @@ var cacheControl = map[string]any{"type": "ephemeral"}
 // maxCacheBreakpoints is Anthropic's documented per-request limit.
 const maxCacheBreakpoints = 4
 
+// blocksOf flattens a body field into a list of block maps. A request decoded
+// from JSON holds its arrays as []any, but ToMessages builds them in Go as
+// []map[string]any — a type assertion to []any silently fails on the latter
+// and left the chat-completions path with no markers at all.
+func blocksOf(v any) []map[string]any {
+	switch list := v.(type) {
+	case []any:
+		out := make([]map[string]any, 0, len(list))
+		for _, item := range list {
+			if m, ok := item.(map[string]any); ok {
+				out = append(out, m)
+			}
+		}
+		return out
+	case []map[string]any:
+		return list
+	}
+	return nil
+}
+
 // injectCacheBreakpoints adds prompt-cache markers to an Anthropic Messages
 // body, in place, and reports how many it added.
 //
@@ -41,28 +61,22 @@ func injectCacheBreakpoints(body map[string]any) int {
 	added := 0
 
 	// Tools: the last definition closes the stable tool block.
-	if tools, ok := body["tools"].([]any); ok && len(tools) > 0 {
-		if last, ok := tools[len(tools)-1].(map[string]any); ok {
-			last["cache_control"] = cacheControl
-			added++
-		}
+	if tools := blocksOf(body["tools"]); len(tools) > 0 {
+		tools[len(tools)-1]["cache_control"] = cacheControl
+		added++
 	}
 
 	// System: the last block closes the gate prompt and any project context.
-	if sys, ok := body["system"].([]any); ok && len(sys) > 0 {
-		if last, ok := sys[len(sys)-1].(map[string]any); ok {
-			last["cache_control"] = cacheControl
-			added++
-		}
+	if sys := blocksOf(body["system"]); len(sys) > 0 {
+		sys[len(sys)-1]["cache_control"] = cacheControl
+		added++
 	}
 
 	// Messages: the last block of the last message closes the whole prefix.
 	if added < maxCacheBreakpoints {
-		if msgs, ok := body["messages"].([]any); ok && len(msgs) > 0 {
-			if last, ok := msgs[len(msgs)-1].(map[string]any); ok {
-				if markLastContentBlock(last) {
-					added++
-				}
+		if msgs := blocksOf(body["messages"]); len(msgs) > 0 {
+			if markLastContentBlock(msgs[len(msgs)-1]) {
+				added++
 			}
 		}
 	}
@@ -87,14 +101,17 @@ func markLastContentBlock(msg map[string]any) bool {
 		}}
 		return true
 	case []any:
+		blocks := blocksOf(content)
+		if len(blocks) == 0 {
+			return false
+		}
+		blocks[len(blocks)-1]["cache_control"] = cacheControl
+		return true
+	case []map[string]any:
 		if len(content) == 0 {
 			return false
 		}
-		last, ok := content[len(content)-1].(map[string]any)
-		if !ok {
-			return false
-		}
-		last["cache_control"] = cacheControl
+		content[len(content)-1]["cache_control"] = cacheControl
 		return true
 	}
 	return false
@@ -103,39 +120,37 @@ func markLastContentBlock(msg map[string]any) bool {
 // hasCacheControl reports whether any block in the body already carries a
 // cache_control marker.
 func hasCacheControl(body map[string]any) bool {
-	if tools, ok := body["tools"].([]any); ok && anyBlockMarked(tools) {
+	if anyBlockMarked(blocksOf(body["tools"])) {
 		return true
 	}
-	if sys, ok := body["system"].([]any); ok && anyBlockMarked(sys) {
+	if anyBlockMarked(blocksOf(body["system"])) {
 		return true
 	}
-	if msgs, ok := body["messages"].([]any); ok {
-		for _, m := range msgs {
-			msg, ok := m.(map[string]any)
-			if !ok {
-				continue
+	for _, msg := range blocksOf(body["messages"]) {
+		switch content := msg["content"].(type) {
+		case []any:
+			if anyBlockMarked(blocksOf(content)) {
+				return true
 			}
-			switch content := msg["content"].(type) {
-			case []any:
-				if anyBlockMarked(content) {
-					return true
-				}
-			case map[string]any:
-				if _, ok := content["cache_control"]; ok {
-					return true
-				}
+		case []map[string]any:
+			if anyBlockMarked(content) {
+				return true
 			}
+		case map[string]any:
+			if _, ok := content["cache_control"]; ok {
+				return true
+			}
+		case string:
+			return false
 		}
 	}
 	return false
 }
 
-func anyBlockMarked(blocks []any) bool {
-	for _, b := range blocks {
-		if blk, ok := b.(map[string]any); ok {
-			if _, marked := blk["cache_control"]; marked {
-				return true
-			}
+func anyBlockMarked(blocks []map[string]any) bool {
+	for _, blk := range blocks {
+		if _, marked := blk["cache_control"]; marked {
+			return true
 		}
 	}
 	return false

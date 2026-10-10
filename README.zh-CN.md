@@ -149,10 +149,10 @@ curl http://localhost:3000/v1/responses \
 
 ### 在 OpenCode 里使用
 
-仓库根目录的 `opencode.json` 由 `go run ./tools/gen-opencode` 从代理所用的同一份目录生成，
-模型列表无需手写。把 `NICEDROID_API_KEY` 指向某个客户端密钥即可，OpenCode 会按模型选择
-合适的 SDK：GPT 系走 `@ai-sdk/openai`（上游是 Responses）、Gemini 走 `@ai-sdk/google`，
-其余走 `@ai-sdk/openai-compatible`。
+一个小插件会从 `GET /v1/models` 拉取模型列表填进 provider，无需手写：把插件放到
+`~/.config/opencode/plugins/`，加一个带 `baseURL` 且不带 `models` 的 `nicedroid`
+provider 块即可，`/models` 里会列出所有在用模型——GPT 系走 `@ai-sdk/openai`，
+Gemini 走 `@ai-sdk/google`，其余走 `@ai-sdk/openai-compatible`。
 
 管理后台按平台分区展示模型，并把 CLI 已下线的模型折叠起来——写作时为 59 个在用、
 34 个历史。注册表给出弃用日期、或已从 CLI 自己的选择器中隐藏的，都算历史模型；

@@ -1,6 +1,12 @@
 package api
 
-import "testing"
+import (
+	"encoding/json"
+	"strconv"
+	"testing"
+
+	"github.com/Sibuxiangx/nicedroid/internal/upstream"
+)
 
 // body builds a minimal Anthropic Messages request shape.
 func body(messages []any, opts ...func(map[string]any)) map[string]any {
@@ -129,5 +135,36 @@ func TestInjectIsIdempotent(t *testing.T) {
 	injectCacheBreakpoints(b)
 	if got := injectCacheBreakpoints(b); got != 0 {
 		t.Fatalf("second pass injected %d breakpoints, want 0", got)
+	}
+}
+
+// The chat-completions path builds the Anthropic body in Go, where ToMessages
+// makes system and messages []map[string]any rather than the []any that JSON
+// decoding produces. A []any assertion silently failed on that, so no marker
+// ever reached the upstream and every turn of a chat-completions client was
+// billed as fresh input.
+func TestInjectOnGoBuiltMessagesBody(t *testing.T) {
+	req := &upstream.ChatRequest{Model: "claude-sonnet-5-5", MaxTokens: 32, Stream: true,
+		Messages: []upstream.ChatMessage{
+			{Role: "user", Content: json.RawMessage(strconv.Quote("say ok"))}}}
+	body := upstream.ToMessages(req, "gate prompt", 8192)
+	if hasCacheControl(body) {
+		t.Fatal("a freshly built body must not look pre-marked")
+	}
+	n := injectCacheBreakpoints(body)
+	if n != 2 {
+		t.Fatalf("injected %d markers, want 2 (no tools in this request)", n)
+	}
+	sys := blocksOf(body["system"])
+	if _, ok := sys[len(sys)-1]["cache_control"]; !ok {
+		t.Error("system[-1] has no cache_control")
+	}
+	msgs := blocksOf(body["messages"])
+	last := blocksOf(msgs[0]["content"])
+	if _, ok := last[len(last)-1]["cache_control"]; !ok {
+		t.Error("last message block has no cache_control")
+	}
+	if !hasCacheControl(body) {
+		t.Error("hasCacheControl does not see a Go-built marker")
 	}
 }
