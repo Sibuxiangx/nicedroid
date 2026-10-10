@@ -123,6 +123,24 @@ func (s *Store) migrate() error {
 			return err
 		}
 	}
+	// One-time repair of TPS values written before the buffered-stream fix.
+	// An absolute 50ms floor let a TTFT-dominated window through, so a
+	// two-digit-millisecond sliver reported hundreds of tokens per second.
+	if v, _ := s.GetSetting("tps_repair_v2", ""); v != "1" {
+		if _, err := s.db.Exec(`UPDATE request_logs SET tps = CASE
+			WHEN completion_tokens <= 0 OR latency_ms <= 0 THEN 0
+			WHEN stream = 1 AND ttft_ms > 0
+				AND (latency_ms - ttft_ms) >= 100
+				AND (latency_ms - ttft_ms) >= 0.10 * latency_ms
+				THEN CAST(completion_tokens AS REAL) / ((latency_ms - ttft_ms) / 1000.0)
+			ELSE CAST(completion_tokens AS REAL) / (latency_ms / 1000.0)
+		END`); err != nil {
+			return err
+		}
+		if err := s.SetSetting("tps_repair_v2", "1"); err != nil {
+			return err
+		}
+	}
 	// One-time backfill of Factory credit estimates for rows logged before the
 	// credits column existed.
 	if v, _ := s.GetSetting("credits_backfill_v1", ""); v != "1" {
@@ -438,21 +456,31 @@ func (s *Store) InsertLog(l RequestLog) error {
 	return err
 }
 
-// minGenerationWindowMs is the smallest latency-minus-TTFT window trusted for
-// TPS math. Below it the subtraction is dominated by response serialization
-// noise (non-streaming requests record TTFT at the end of the whole response),
-// and dividing by such a sliver produces absurd values.
-const minGenerationWindowMs = 50
+const (
+	// The latency-minus-TTFT window is only trusted when it is big enough to
+	// mean something on its own ...
+	minGenerationWindowMs = 100
+	// ... and when TTFT is a minority of the request. Providers that buffer a
+	// stream and flush it as one burst put TTFT within a few tens of
+	// milliseconds of the total latency; dividing by that sliver reports
+	// hundreds of tokens per second for a request the caller waited two
+	// seconds for, and whether a request clears an absolute floor is a
+	// millisecond coin flip. Past the fraction there is no way to recover the
+	// true generation speed, so the figure falls back to end-to-end.
+	minGenerationWindowFraction = 0.10
+)
 
 // ComputeTPS calculates output tokens per second of effective generation time.
-// Only streaming requests subtract TTFT, and only when the remaining window is
-// at least minGenerationWindowMs; everything else uses total latency.
+// Only streaming requests subtract TTFT, and only when the remaining window
+// clears both floors; everything else uses total latency.
 func ComputeTPS(completionTokens, latencyMs, ttftMs int, stream bool) float64 {
 	if completionTokens <= 0 || latencyMs <= 0 {
 		return 0
 	}
 	genMs := latencyMs
-	if stream && ttftMs > 0 && latencyMs-ttftMs >= minGenerationWindowMs {
+	if stream && ttftMs > 0 &&
+		latencyMs-ttftMs >= minGenerationWindowMs &&
+		float64(latencyMs-ttftMs) >= minGenerationWindowFraction*float64(latencyMs) {
 		genMs = latencyMs - ttftMs
 	}
 	return float64(completionTokens) / (float64(genMs) / 1000.0)

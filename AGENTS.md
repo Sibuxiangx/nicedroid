@@ -193,9 +193,16 @@ round, so keep rounds low while iterating.
 ## Measuring TPS — two deliberately different numbers
 
 - **Request logs** (`store.ComputeTPS`): for streaming requests, output tokens
-  over `latency − TTFT`; for non-streaming, over the full latency. This answers
-  "how fast did the model generate". A one-time repair migration
-  (`tps_repair_v1`) fixed rows written before this was correct.
+  over `latency − TTFT` — but only when the window clears both an absolute
+  floor (100 ms) and a relative one (10% of the request). Many providers
+  buffer a stream and flush it as one burst, which puts TTFT within a few tens
+  of milliseconds of the total latency; dividing by that sliver reported
+  hundreds of tokens per second for a two-second request, and whether a row
+  cleared the old absolute 50 ms floor was a millisecond coin flip that made
+  the same request swing between 5 and 500 tok/s. When TTFT dominates there is
+  no way to recover the true generation speed, so the figure falls back to
+  end-to-end. `tps_repair_v1` and `tps_repair_v2` are one-time repairs for
+  rows written before each of these corrections.
 - **Provider benchmark** (`admin.measureTPS`): output tokens over the *entire*
   request. Providers that buffer a stream and flush it as one burst would make a
   `latency − TTFT` window collapse to a few milliseconds and report absurd
