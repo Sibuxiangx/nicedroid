@@ -1,0 +1,19 @@
+# Build output (regenerate with ./build.sh)
+/nicedroid
+/droid2api
+
+# SQLite database — contains real upstream API keys, never commit
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+
+# Node
+web/node_modules/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
