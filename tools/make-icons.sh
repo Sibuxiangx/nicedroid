@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Regenerate the admin UI icons from the source artwork.
 #
-# The source is a 1024x652 illustration; the icons are a 1:1 crop of the cat's
-# head. Everything is derived from SOURCE by this script, so tweaking the crop
-# is a one-line change followed by a rerun — do not hand-edit the output files.
+# The source is a 1024x862 illustration; the icons are a 1:1 crop of the cat.
+# Everything is derived from SOURCE by this script, so tweaking the crop is a
+# one-line change followed by a rerun — do not hand-edit the output files.
 #
 # Requires ImageMagick 7 (`magick`) and cwebp.
 #
@@ -15,9 +15,11 @@ SOURCE="$ROOT/web/assets-source/logo-source.jpg"
 OUT="$ROOT/web/public"
 
 # The square to cut out of the source, and where the art actually sits:
-#   CROP  — WxH+X+Y, must be square
+#   CROP  — WxH+X+Y, must be square. The source is 1024x862, so a 852 square
+#           leaves 10px of vertical slack (y=5 centres it) and 172px across,
+#           which is what the x offset spends.
 #   SIZE  — master render size (512 is plenty; every icon is a downscale of it)
-CROP="560x560+440+70"
+CROP="852x852+86+5"
 SIZE=512
 
 command -v magick >/dev/null || { echo "ImageMagick 7 (magick) not found" >&2; exit 1; }
