@@ -2,41 +2,45 @@ package admin
 
 import "testing"
 
-func okRound(round, prompt, cached int, tps float64) BenchmarkResult {
-	return BenchmarkResult{OK: true, Round: round, PromptTokens: prompt,
-		CachedTokens: cached, TPS: tps, TTFTMs: 100}
+func tpsRound(tps float64) BenchmarkResult {
+	return BenchmarkResult{OK: true, Phase: "tps", TPS: tps, TTFTMs: 100}
 }
 
-func TestSummarizeCacheHitExcludesTheWriteRound(t *testing.T) {
-	// Round 1 writes the cache and always reads 0, so folding it into the
-	// average would cap a two-round run at 50% and make every provider look
-	// unusable against the 90% bar.
+func cacheRound(prompt, cached int) BenchmarkResult {
+	return BenchmarkResult{OK: true, Phase: "cache", PromptTokens: prompt, CachedTokens: cached}
+}
+
+func TestSummarizeKeepsTheGroupsApart(t *testing.T) {
+	// The cache rounds also carry a TPS figure, but it is not part of the
+	// speed measurement: the two groups probe different things.
 	s := summarizeProvider("databricks", []BenchmarkResult{
-		okRound(1, 2000, 0, 20),
-		okRound(2, 2000, 1984, 90),
-		okRound(3, 2000, 1990, 95),
-	}, 3)
-	if s.CacheRounds != 2 {
-		t.Fatalf("CacheRounds = %d, want 2", s.CacheRounds)
+		tpsRound(80), tpsRound(100),
+		cacheRound(2000, 0), cacheRound(2000, 1984), cacheRound(2000, 1990),
+	})
+	if s.CacheRounds != 3 {
+		t.Fatalf("CacheRounds = %d, want 3", s.CacheRounds)
 	}
-	// (1984 + 1990) / 4000
-	if s.CacheHitPct != 99.4 {
-		t.Fatalf("CacheHitPct = %v, want 99.4", s.CacheHitPct)
+	// (0 + 1984 + 1990) / 6000 — the speed group has already warmed the cache,
+	// so every cache round counts as a steady-state reading.
+	if s.CacheHitPct != 66.2 {
+		t.Fatalf("CacheHitPct = %v, want 66.2", s.CacheHitPct)
 	}
 	if s.TPS != 90 {
 		t.Fatalf("TPS = %v, want the median 90", s.TPS)
 	}
+	if s.TPSRoundsOK != 2 {
+		t.Fatalf("TPSRoundsOK = %d, want 2", s.TPSRoundsOK)
+	}
 }
 
 func TestSummarizeCacheHitWithoutRoundsToHit(t *testing.T) {
-	// A single successful round can only ever write the cache, so there is no
-	// hit rate to report and the UI has to show nothing rather than 0%.
-	s := summarizeProvider("fireworks", []BenchmarkResult{okRound(1, 2000, 0, 30)}, 1)
+	// A provider that reported no cache figures has no hit rate to show.
+	s := summarizeProvider("fireworks", []BenchmarkResult{tpsRound(30)})
 	if s.CacheRounds != 0 || s.CacheHitPct != 0 {
 		t.Fatalf("cache = %d/%v, want 0/0", s.CacheRounds, s.CacheHitPct)
 	}
 	if !s.OK {
-		t.Fatal("a successful round must still summarise as OK")
+		t.Fatal("a successful speed round must still summarise as OK")
 	}
 }
 
@@ -85,11 +89,20 @@ func TestPickBestIgnoresFailingProviders(t *testing.T) {
 func TestBenchmarkPromptClearsTheCacheFloor(t *testing.T) {
 	// Providers refuse to cache a prompt under ~1024 tokens, so a short
 	// benchmark prompt would report every provider as cache-free.
-	n := len(benchmarkPrompt) / 4
+	n := len(benchmarkCachePrefix) / 4
 	if n < 1200 {
-		t.Fatalf("benchmark prompt is ~%d tokens, want >= 1200", n)
+		t.Fatalf("benchmark cache prefix is ~%d tokens, want >= 1200", n)
 	}
-	if benchmarkPrompt != buildBenchmarkPrompt() {
-		t.Fatal("benchmark prompt is not deterministic")
+	if benchmarkCachePrefix != buildBenchmarkPrefix() {
+		t.Fatal("benchmark cache prefix is not deterministic")
+	}
+}
+
+func TestBenchmarkTaskAsksForALongGeneration(t *testing.T) {
+	// TPS over a dozen output tokens measures prompt ingestion, not streaming
+	// speed, which is how the benchmark ended up recommending a backend on a
+	// 32 tok/s figure.
+	if len(benchmarkTask) < 40 {
+		t.Fatalf("benchmark task %q is too short to drive a long generation", benchmarkTask)
 	}
 }

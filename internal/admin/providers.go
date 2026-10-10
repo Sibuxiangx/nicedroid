@@ -92,24 +92,33 @@ func contains(list []string, v string) bool {
 // ---- provider benchmark ----
 
 const (
-	// benchmarkMaxToken and the timeout bound one probe; the round counts
-	// control how many chances each provider gets.
-	benchmarkMaxToken  = 850
-	benchmarkTimeout   = 90 * time.Second
-	benchmarkRounds    = 3
-	benchmarkMaxRounds = 5
+	// benchmarkMaxToken and the timeout bound one probe. The two groups get
+	// their own round counts: speed needs only a couple of readings, while the
+	// cache figure wants more repeats to be worth anything.
+	benchmarkMaxToken    = 850
+	benchmarkTimeout     = 90 * time.Second
+	benchmarkTPSRounds   = 2
+	benchmarkCacheRounds = 3
+	benchmarkMaxRounds   = 5
 )
 
-// benchmarkPrompt has to clear the ~1024-token floor every provider applies
-// before it will cache a prefix, and be byte-identical across rounds so round N
-// can hit what round N-1 wrote. A short prompt would make every provider look
-// cache-free no matter how good its cache is. Built once at startup.
-var benchmarkPrompt = buildBenchmarkPrompt()
+// benchmarkTask asks for a long generation. TPS measured over a dozen output
+// tokens is prompt-processing time wearing a TPS hat: it ranks providers by
+// how fast they ingest the prompt rather than how fast they stream, which is
+// the thing being measured.
+const benchmarkTask = "Write the integers from 1 to 300, one per line, with no other text and no commentary."
 
-// buildBenchmarkPrompt emits a stable block of filler long enough to clear the
+// benchmarkCachePrefix is a long, byte-stable block appended to the system
+// prompt. It has to clear the ~1024-token floor every provider applies before
+// it will cache a prefix, and be identical across rounds so round N can hit
+// what round N-1 wrote. A short prefix would make every provider look
+// cache-free no matter how good its cache is. Built once at startup.
+var benchmarkCachePrefix = buildBenchmarkPrefix()
+
+// buildBenchmarkPrefix emits a stable block of filler long enough to clear the
 // cache minimum, with enough variation between lines that a provider cannot
 // collapse it to a handful of tokens.
-func buildBenchmarkPrompt() string {
+func buildBenchmarkPrefix() string {
 	var b strings.Builder
 	b.WriteString("Repository conventions reference:\n")
 	for i := 1; i <= 50; i++ {
@@ -120,9 +129,11 @@ func buildBenchmarkPrompt() string {
 	return b.String()
 }
 
-// BenchmarkResult is one provider's streaming probe outcome.
+// BenchmarkResult is one provider's streaming probe outcome. Phase is "tps"
+// or "cache" — the same request either way, but a different thing measured.
 type BenchmarkResult struct {
 	Provider     string  `json:"provider"`
+	Phase        string  `json:"phase"`
 	OK           bool    `json:"ok"`
 	Round        int     `json:"round"`
 	TTFTMs       int     `json:"ttft_ms"`
@@ -137,26 +148,28 @@ type BenchmarkResult struct {
 
 // ProviderSummary aggregates a provider's rounds into one comparable figure.
 type ProviderSummary struct {
-	Provider string  `json:"provider"`
-	OK       bool    `json:"ok"`
-	TPS      float64 `json:"tps"`
-	TTFTMs   int     `json:"ttft_ms"`
-	RoundsOK int     `json:"rounds_ok"`
-	Rounds   int     `json:"rounds"`
-	// CacheHitPct is the average share of the prompt served from cache, over
-	// the rounds that could hit (round 1 writes the cache). CacheRounds is 0
-	// when the provider reported no usable cache figures.
+	Provider string `json:"provider"`
+	OK       bool   `json:"ok"`
+	// Speed group: median tokens-per-second and time-to-first-token over the
+	// rounds that asked for a long generation.
+	TPS         float64 `json:"tps"`
+	TTFTMs      int     `json:"ttft_ms"`
+	TPSRounds   int     `json:"tps_rounds"`
+	TPSRoundsOK int     `json:"tps_rounds_ok"`
+	// Cache group: average share of the prompt served from cache. CacheRounds
+	// is 0 when the provider reported no usable cache figures.
 	CacheHitPct float64 `json:"cache_hit_pct"`
 	CacheRounds int     `json:"cache_rounds"`
 	Error       string  `json:"error,omitempty"`
 }
 
-// BenchmarkProviders streams the same generation through every provider of a
-// model and reports time-to-first-token plus tokens per second. Providers are
-// probed round-robin over several rounds so time-varying upstream load affects
-// them equally, and each provider is summarised by the median of its rounds.
-// Results are pushed as SSE events so the UI can show each provider the moment
-// it finishes.
+// BenchmarkProviders probes every provider of a model in two separate groups:
+// a speed group that measures tokens per second over a long generation, and a
+// cache group that repeats an identical request and measures how much of the
+// prompt came back from cache. Splitting them keeps each measurement in the
+// shape that suits it — a cache run wants repeats, a speed run wants output
+// volume — and results are pushed as SSE events so the UI can show each
+// provider the moment it finishes.
 func (a *Admin) BenchmarkProviders(c echo.Context) error {
 	m, ok := config.LookupModel(c.Param("id"))
 	if !ok {
@@ -177,12 +190,12 @@ func (a *Admin) BenchmarkProviders(c echo.Context) error {
 	if len(targets) == 0 {
 		return c.JSON(http.StatusBadRequest, map[string]any{"error": "model has no providers to test"})
 	}
-	rounds := body.Rounds
-	if rounds <= 0 {
-		rounds = benchmarkRounds
+	cacheRounds := body.Rounds
+	if cacheRounds <= 0 {
+		cacheRounds = benchmarkCacheRounds
 	}
-	if rounds > benchmarkMaxRounds {
-		rounds = benchmarkMaxRounds
+	if cacheRounds > benchmarkMaxRounds {
+		cacheRounds = benchmarkMaxRounds
 	}
 
 	w := c.Response()
@@ -203,31 +216,40 @@ func (a *Admin) BenchmarkProviders(c echo.Context) error {
 		return true
 	}
 
-	if !send("start", map[string]any{"model": m.ID, "providers": targets, "rounds": rounds}) {
+	if !send("start", map[string]any{
+		"model": m.ID, "providers": targets,
+		"tps_rounds": benchmarkTPSRounds, "cache_rounds": cacheRounds,
+	}) {
 		return nil
 	}
 
 	collected := make(map[string][]BenchmarkResult, len(targets))
-	for round := 1; round <= rounds; round++ {
-		for _, p := range targets {
-			if c.Request().Context().Err() != nil {
-				return nil
-			}
-			if !send("probe", map[string]any{"provider": p, "round": round}) {
-				return nil
-			}
-			res := a.benchProvider(c.Request().Context(), m, p)
-			res.Round = round
-			collected[p] = append(collected[p], res)
-			if !send("result", res) {
-				return nil
+	for _, phase := range []struct {
+		name   string
+		rounds int
+	}{{"tps", benchmarkTPSRounds}, {"cache", cacheRounds}} {
+		for round := 1; round <= phase.rounds; round++ {
+			for _, p := range targets {
+				if c.Request().Context().Err() != nil {
+					return nil
+				}
+				if !send("probe", map[string]any{"provider": p, "phase": phase.name, "round": round}) {
+					return nil
+				}
+				res := a.benchProvider(c.Request().Context(), m, p)
+				res.Phase = phase.name
+				res.Round = round
+				collected[p] = append(collected[p], res)
+				if !send("result", res) {
+					return nil
+				}
 			}
 		}
 	}
 
 	summaries := make([]ProviderSummary, 0, len(targets))
 	for _, p := range targets {
-		summaries = append(summaries, summarizeProvider(p, collected[p], rounds))
+		summaries = append(summaries, summarizeProvider(p, collected[p]))
 	}
 	best, bestSum := pickBest(summaries)
 	if best != "" {
@@ -281,11 +303,11 @@ func pickBest(summaries []ProviderSummary) (string, ProviderSummary) {
 	return "", ProviderSummary{}
 }
 
-// summarizeProvider reduces a provider's rounds to a median TPS and TTFT so a
-// single lucky round cannot decide the winner, plus an average cache hit rate
-// over the rounds that could actually hit.
-func summarizeProvider(provider string, results []BenchmarkResult, rounds int) ProviderSummary {
-	s := ProviderSummary{Provider: provider, Rounds: rounds}
+// summarizeProvider reduces a provider's two probe groups to one comparable
+// figure: a median TPS and TTFT from the speed rounds, and an average cache
+// hit rate across the cache rounds.
+func summarizeProvider(provider string, results []BenchmarkResult) ProviderSummary {
+	s := ProviderSummary{Provider: provider}
 	var tps []float64
 	var ttfts []int
 	cached, prompt, cacheRounds := 0, 0, 0
@@ -297,20 +319,21 @@ func summarizeProvider(provider string, results []BenchmarkResult, rounds int) P
 			}
 			continue
 		}
-		tps = append(tps, r.TPS)
-		if r.TTFTMs > 0 {
-			ttfts = append(ttfts, r.TTFTMs)
+		if r.Phase == "tps" {
+			tps = append(tps, r.TPS)
+			if r.TTFTMs > 0 {
+				ttfts = append(ttfts, r.TTFTMs)
+			}
+			continue
 		}
-		// Round 1 writes the cache, so counting it would cap a two-round run at
-		// 50% and make every provider look unusable.
-		if r.Round > 1 && r.PromptTokens > 0 {
+		if r.PromptTokens > 0 {
 			cached += r.CachedTokens
 			prompt += r.PromptTokens
 			cacheRounds++
 		}
 	}
-	s.RoundsOK = len(tps)
-	if s.RoundsOK == 0 {
+	s.TPSRoundsOK = len(tps)
+	if s.TPSRoundsOK == 0 {
 		s.Error = lastErr
 		if s.Error == "" {
 			s.Error = "no successful round"
@@ -322,6 +345,9 @@ func summarizeProvider(provider string, results []BenchmarkResult, rounds int) P
 	if len(ttfts) > 0 {
 		s.TTFTMs = medianInt(ttfts)
 	}
+	// The speed group already warmed the cache, so every cache round is a
+	// steady-state reading rather than a write round that would drag the
+	// average down.
 	if cacheRounds > 0 && prompt > 0 {
 		s.CacheRounds = cacheRounds
 		s.CacheHitPct = math.Round(float64(cached)/float64(prompt)*1000) / 10
@@ -371,10 +397,13 @@ func (a *Admin) benchProvider(parent context.Context, m config.Model, provider s
 		MaxTokens:       benchmarkMaxToken,
 		ReasoningEffort: config.MapEffort(provider, effort),
 		Messages: []upstream.ChatMessage{
-			{Role: "user", Content: json.RawMessage(strconv.Quote(benchmarkPrompt))},
+			{Role: "user", Content: json.RawMessage(strconv.Quote(benchmarkTask))},
 		},
 	}
+	// The cache prefix rides in the system message, where it is the stable
+	// head of the prompt; the generation task stays in the user message.
 	prompt, _ := a.Store.GetSetting("system_prompt", a.Cfg.DroidSystemPrompt)
+	prompt += "\n\n" + benchmarkCachePrefix
 	var upBody map[string]any
 	switch m.Family {
 	case config.FamilyMessages:

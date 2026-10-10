@@ -171,6 +171,7 @@ export interface RequestLog {
 
 export interface BenchmarkResult {
   provider: string
+  phase: "tps" | "cache"
   ok: boolean
   round: number
   ttft_ms: number
@@ -188,16 +189,16 @@ export interface ProviderSummary {
   ok: boolean
   tps: number
   ttft_ms: number
-  rounds_ok: number
-  rounds: number
+  tps_rounds: number
+  tps_rounds_ok: number
   cache_hit_pct: number
   cache_rounds: number
   error?: string
 }
 
 export type BenchmarkEvent =
-  | { type: "start"; providers: string[]; rounds: number }
-  | { type: "probe"; provider: string; round: number }
+  | { type: "start"; providers: string[]; tps_rounds: number; cache_rounds: number }
+  | { type: "probe"; provider: string; phase: "tps" | "cache"; round: number }
   | { type: "result"; result: BenchmarkResult }
   | {
       type: "summary"
@@ -256,9 +257,19 @@ export async function benchmarkProviders(
         try {
           const parsed = JSON.parse(data)
           if (event === "start")
-            onEvent({ type: "start", providers: parsed.providers ?? [], rounds: parsed.rounds ?? 1 })
+            onEvent({
+              type: "start",
+              providers: parsed.providers ?? [],
+              tps_rounds: parsed.tps_rounds ?? 2,
+              cache_rounds: parsed.cache_rounds ?? 3,
+            })
           else if (event === "probe")
-            onEvent({ type: "probe", provider: parsed.provider ?? "", round: parsed.round ?? 1 })
+            onEvent({
+              type: "probe",
+              provider: parsed.provider ?? "",
+              phase: parsed.phase === "cache" ? "cache" : "tps",
+              round: parsed.round ?? 1,
+            })
           else if (event === "result") onEvent({ type: "result", result: parsed })
           else if (event === "summary")
             onEvent({

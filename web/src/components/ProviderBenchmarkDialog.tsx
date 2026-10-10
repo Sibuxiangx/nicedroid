@@ -33,9 +33,17 @@ type Phase = "idle" | "running" | "done" | "stopped"
 interface Row {
   provider: string
   state: "pending" | "running" | "done" | "failed"
-  result?: BenchmarkResult
   summary?: ProviderSummary
-  roundsDone: number
+  /** Latest result per phase, so the two groups report independently. */
+  tpsResult?: BenchmarkResult
+  cacheResult?: BenchmarkResult
+  tpsDone: number
+  cacheDone: number
+  /** Running cache totals across the cache group, for a live hit rate. */
+  cachePrompt: number
+  cacheCached: number
+  /** Which group the most recent round belonged to. */
+  lastPhase?: "tps" | "cache"
 }
 
 interface Props {
@@ -65,7 +73,16 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
   const providers = useMemo(() => model?.providers ?? [], [model])
 
   function reset() {
-    setRows(providers.map((p) => ({ provider: p, state: "pending", roundsDone: 0 })))
+    setRows(
+      providers.map((p) => ({
+        provider: p,
+        state: "pending" as const,
+        tpsDone: 0,
+        cacheDone: 0,
+        cachePrompt: 0,
+        cacheCached: 0,
+      })),
+    )
     setPhase("idle")
     setBest(null)
   }
@@ -87,7 +104,14 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
     setBest(null)
     setRounds(roundCount)
     setRows(
-      providers.map((p) => ({ provider: p, state: "pending" as const, roundsDone: 0 })),
+      providers.map((p) => ({
+        provider: p,
+        state: "pending" as const,
+        tpsDone: 0,
+        cacheDone: 0,
+        cachePrompt: 0,
+        cacheCached: 0,
+      })),
     )
     setPhase("running")
     try {
@@ -107,15 +131,23 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
             setRows((prev) =>
               prev.map((row) => {
                 if (row.provider !== r.provider) return row
-                const roundsDone = row.roundsDone + 1
+                const isTps = r.phase === "tps"
                 // A failed round must not erase a good one from an earlier
                 // round, so only successful rounds replace the shown result.
-                const keep = row.result?.ok && !r.ok
+                const prevResult = isTps ? row.tpsResult : row.cacheResult
+                const keep = prevResult?.ok && !r.ok
                 return {
                   ...row,
-                  roundsDone,
+                  lastPhase: r.phase,
+                  tpsDone: isTps ? row.tpsDone + 1 : row.tpsDone,
+                  cacheDone: isTps ? row.cacheDone : row.cacheDone + 1,
+                  // Running cache totals, so the hit rate can be shown while
+                  // the cache group is still in flight.
+                  cachePrompt: isTps || keep ? row.cachePrompt : row.cachePrompt + r.prompt_tokens,
+                  cacheCached: isTps || keep ? row.cacheCached : row.cacheCached + r.cached_tokens,
                   state: (keep ? row.state : r.ok ? "done" : "failed") as Row["state"],
-                  result: keep ? row.result : r,
+                  tpsResult: isTps ? (keep ? row.tpsResult : r) : row.tpsResult,
+                  cacheResult: isTps ? row.cacheResult : keep ? row.cacheResult : r,
                 }
               }),
             )
@@ -163,7 +195,7 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
     }
   }
 
-  const maxTPS = Math.max(0, ...rows.map((r) => r.summary?.tps ?? r.result?.tps ?? 0))
+  const maxTPS = Math.max(0, ...rows.map((r) => r.summary?.tps ?? r.tpsResult?.tps ?? 0))
   const finished = phase === "done" || phase === "stopped"
 
   // Auto-pin the winner once the run completes, so a single click on a model
@@ -186,22 +218,28 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
         <DialogHeader>
           <DialogTitle>供应商测速 · {model?.display_name}</DialogTitle>
           <DialogDescription>
-            用同一长提示词（约 2000 token，超过各家缓存下限）流式生成 {rounds} 轮。缓存命中率取第 2
-            轮起的平均值；TPS 为端到端吞吐（输出 token ÷ 总耗时）。命中率 ≥
+            分两组探测：速度组 2 轮，用长生成任务测端到端吞吐（输出 token ÷
+            总耗时）；缓存组 {rounds} 轮重复同一请求，测提示词命中缓存的占比。命中率 ≥
             {best?.bar ?? 90}% 才认为该供应商可用于 agent 场景，达标者中再选最快的。
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           {rows.map((row) => {
-            const r = row.result
             const s = row.summary
-            // Before the run finishes, show the latest round; afterwards show
-            // the median across rounds, which is the number used to rank.
+            // Show whichever group is in flight, falling back to the speed
+            // group once it is done; the summary carries the final figures.
+            const r = (row.lastPhase === "cache" ? row.cacheResult : row.tpsResult) ?? row.tpsResult
             const shownTPS = s?.tps ?? r?.tps ?? 0
             const shownTTFT = s?.ttft_ms || r?.ttft_ms || 0
             const pct = maxTPS > 0 && shownTPS ? Math.max(4, Math.round((shownTPS / maxTPS) * 100)) : 0
             const isBest = best?.provider === row.provider
+            // Live cache hit rate while the cache group runs; the summary
+            // replaces it with the settled average.
+            const liveHit = row.cachePrompt > 0 ? (row.cacheCached / row.cachePrompt) * 100 : null
+            const cacheHit = s?.cache_rounds ? s.cache_hit_pct : liveHit
+            const cacheRounds = s?.cache_rounds ?? row.cacheDone
+            const cacheGood = (cacheHit ?? 0) >= (best?.bar ?? 90)
             return (
               <div key={row.provider} className="space-y-1.5 rounded-lg border p-3">
                 <div className="flex items-center justify-between gap-3">
@@ -210,7 +248,7 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
                     {isBest && (
                       <Badge className="text-[10px]">
                         <Zap className="mr-0.5 h-3 w-3" />
-                        {(s?.cache_hit_pct ?? 0) >= (best?.bar ?? 90) ? "缓存最优" : "最快"}
+                        {cacheGood ? "缓存最优" : "最快"}
                       </Badge>
                     )}
                     {model?.pinned_provider === row.provider && (
@@ -222,25 +260,42 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
                     {row.state === "running" && (
                       <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
                     )}
-                    {s && s.rounds > 1 && (
+                    {!s && (row.tpsDone > 0 || row.cacheDone > 0) && (
                       <span className="text-xs text-muted-foreground">
-                        {s.rounds_ok}/{s.rounds} 轮成功
+                        速度 {row.tpsDone}/2
+                        {cacheRounds > 0 ? ` · 缓存 ${row.cacheDone}/${rounds}` : ""}
+                      </span>
+                    )}
+                    {s && (
+                      <span className="text-xs text-muted-foreground">
+                        速度 {s.tps_rounds_ok}/{s.tps_rounds} 轮
+                        {s.cache_rounds > 0 ? ` · 缓存 ${s.cache_rounds} 轮` : ""}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-4 text-xs tabular-nums">
                     {(s?.ok || r?.ok) && (
                       <>
-                        {s && s.cache_rounds > 0 && (
+                        {cacheHit !== null && cacheRounds > 0 && (
                           <span
                             className={
-                              s.cache_hit_pct >= (best?.bar ?? 90)
+                              cacheGood
                                 ? "text-emerald-600 dark:text-emerald-400"
                                 : "text-amber-600 dark:text-amber-400"
                             }
-                            title={`第 2 轮起 ${s.cache_rounds} 轮平均值`}
+                            title={
+                              s?.cache_rounds
+                                ? `${s.cache_rounds} 轮缓存组平均值（速度组已预热缓存）`
+                                : "缓存组进行中的累计命中率"
+                            }
                           >
-                            缓存 <span className="font-semibold">{s.cache_hit_pct.toFixed(1)}%</span>
+                            缓存{" "}
+                            <span className="font-semibold">
+                              {cacheHit.toFixed(1)}%
+                            </span>
+                            {!s && row.cacheDone < rounds && (
+                              <span className="text-muted-foreground">（{row.cacheDone}/{rounds}）</span>
+                            )}
                           </span>
                         )}
                         <span className="text-muted-foreground">
@@ -249,8 +304,11 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
                         {r && (
                           <span className="text-muted-foreground">
                             {r.tokens} tok / {(r.elapsed_ms / 1000).toFixed(1)}s
-                            {r.round ? ` · 第 ${r.round} 轮` : ""}
+                            {r.round ? ` · ${r.phase === "tps" ? "速度" : "缓存"}第 ${r.round} 轮` : ""}
                           </span>
+                        )}
+                        {row.lastPhase === "cache" && !r?.tokens && (
+                          <span className="text-muted-foreground">缓存组进行中…</span>
                         )}
                         <span className="text-base font-semibold">{shownTPS.toFixed(1)}</span>
                         <span className="text-muted-foreground">tok/s</span>
@@ -278,7 +336,7 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
             <span className="text-sm">测试完成后自动固定最优供应商（缓存优先）</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">轮数</span>
+            <span className="text-xs text-muted-foreground">缓存轮数</span>
             <Select value={String(rounds)} onValueChange={(v) => setRounds(Number(v))}>
               <SelectTrigger size="sm" className="w-16" disabled={phase === "running"}>
                 <SelectValue />
