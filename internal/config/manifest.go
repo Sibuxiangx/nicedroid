@@ -13,13 +13,14 @@ import (
 // binary, and translated here into Model values. Refreshing it happens in CI
 // (.github/workflows/update-models.yml), never by editing Go code.
 
-// Manifest is the decoded model catalog.
+// Manifest is the decoded model catalog. The file is deterministic for a given
+// CLI build, which is what lets the refresh workflow compare versions instead of
+// diffing content.
 type Manifest struct {
-	Schema      int             `json:"schema"`
-	Source      string          `json:"source"`
-	GeneratedAt string          `json:"generated_at"`
-	CLI         ManifestCLI     `json:"cli"`
-	Models      []ManifestModel `json:"models"`
+	Schema int             `json:"schema"`
+	Source string          `json:"source"`
+	CLI    ManifestCLI     `json:"cli"`
+	Models []ManifestModel `json:"models"`
 }
 
 // ManifestCLI records which Droid build the catalog was taken from.
@@ -90,8 +91,16 @@ func ManifestUserAgent() string { return embeddedManifest.CLI.UserAgent }
 
 // ManifestSummary describes the embedded catalog for startup logs.
 func ManifestSummary() string {
-	return fmt.Sprintf("%d models from droid %s (manifest generated %s)",
-		len(embeddedManifest.Models), embeddedManifest.CLI.Version, embeddedManifest.GeneratedAt)
+	var current, retired int
+	for _, m := range embeddedManifest.Models {
+		if m.DeprecatedOn != "" || !m.CLIVisible {
+			retired++
+			continue
+		}
+		current++
+	}
+	return fmt.Sprintf("%d models from droid %s (%d current, %d retired)",
+		len(embeddedManifest.Models), embeddedManifest.CLI.Version, current, retired)
 }
 
 // loadManifest translates the embedded catalog into Models.

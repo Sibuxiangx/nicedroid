@@ -48,12 +48,16 @@ const schemaVersion = 1
 // ---------- manifest shape ----------
 
 // Manifest is the generated model catalog.
+//
+// The output is deterministic: the same CLI binary always produces byte-identical
+// JSON. There is deliberately no extraction timestamp, so the daily refresh can
+// decide what to do by comparing `cli.version` alone — a timestamp would make
+// every run differ and produce an empty commit every day.
 type Manifest struct {
-	Schema      int     `json:"schema"`
-	Source      string  `json:"source"`
-	GeneratedAt string  `json:"generated_at,omitempty"`
-	CLI         CLIInfo `json:"cli"`
-	Models      []Model `json:"models"`
+	Schema int     `json:"schema"`
+	Source string  `json:"source"`
+	CLI    CLIInfo `json:"cli"`
+	Models []Model `json:"models"`
 }
 
 // CLIInfo records which Droid build the manifest came from.
@@ -610,7 +614,6 @@ func main() {
 	binary := flag.String("binary", "", "path to a droid binary (positional argument also accepted)")
 	version := flag.String("version", "", "CLI version the binary reports, e.g. 0.238.0")
 	out := flag.String("out", "-", "output path, or - for stdout")
-	noTimestamp := flag.Bool("no-timestamp", false, "omit generated_at, so the file can be diffed across runs")
 	crossCheck := flag.String("cross-check", "", "path to `droid exec --help` output; fails when a model it lists is missing from the extraction")
 
 	// Go's flag package stops parsing at the first non-flag argument. Rotate a
@@ -713,9 +716,6 @@ func main() {
 			UserAgent: "factory-cli/" + *version,
 		},
 		Models: models,
-	}
-	if !*noTimestamp {
-		manifest.GeneratedAt = time.Now().UTC().Format("2006-01-02T15:04:05Z")
 	}
 
 	payload, err := json.MarshalIndent(manifest, "", "  ")

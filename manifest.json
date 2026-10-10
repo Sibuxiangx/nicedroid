@@ -1,7 +1,6 @@
 {
   "schema": 1,
   "source": "droid-cli",
-  "generated_at": "2026-10-10T03:52:20Z",
   "cli": {
     "version": "0.238.0",
     "user_agent": "factory-cli/0.238.0"

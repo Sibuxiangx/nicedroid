@@ -103,11 +103,19 @@ Two distinctions in the data are easy to get wrong:
   collapses retired models; `GET /v1/models` lists them with a `deprecated` flag.
   The two signals do not overlap — most hidden models carry no date.
 
-`.github/workflows/update-models.yml` runs this daily: it reads the latest
-`@factory/cli` version from npm, downloads that build, verifies its SHA-256,
-re-extracts, and commits. The CLI version in the manifest is also the version the
-proxy identifies itself as upstream (`config.ManifestVersion()`), so refreshing
-the catalog is what moves the gateway onto a newer CLI release.
+The output must stay **deterministic**: the same binary has to produce
+byte-identical JSON. There is deliberately no extraction timestamp, and model
+ordering is sorted. This is what lets the refresh job decide by comparing
+`cli.version` alone — a run-dependent field would make every run differ and
+produce an empty commit every day.
+
+`.github/workflows/update-models.yml` runs this daily: it compares the manifest's
+`cli.version` against the latest `@factory/cli` on npm and does nothing when they
+match. When they differ it downloads that build, verifies its SHA-256, checks the
+build reports the version it was published under, re-extracts, runs the tests,
+and commits. The CLI version in the manifest is also the version the proxy
+identifies itself as upstream (`config.ManifestVersion()`), so refreshing the
+catalog is what moves the gateway onto a newer CLI release.
 
 ## Layout
 

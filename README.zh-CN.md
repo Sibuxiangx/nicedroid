@@ -150,10 +150,15 @@ curl http://localhost:3000/v1/responses \
 
 ### 目录如何保持最新
 
-目录本身打包在 Droid CLI 里，所以 `manifest.json` 跟踪的就是 CLI 的版本。
-[刷新 workflow](.github/workflows/update-models.yml) 每天检查 npm 上 `@factory/cli`
-的新版本；一旦有新版本，它会下载对应的构建产物、校验 SHA-256、重新提取注册表并提交结果。
-因此新模型会自动出现在这里，不需要任何人改 Go 或 Markdown。
+目录本身打包在 Droid CLI 里，所以 `manifest.json` 跟踪的就是 CLI 的版本——
+`cli.version` 字段记录了它来自哪个构建，代理也用它向上游表明身份。
+[刷新 workflow](.github/workflows/update-models.yml) 每天把它和 npm 上最新的
+`@factory/cli` 比对。两者不一致时，它会下载对应的构建产物、校验 SHA-256、
+确认该构建自报的版本与发布版本一致，然后重新提取注册表并提交。
+
+提取是确定性的：同一个二进制永远产出逐字节相同的 JSON，不含时间戳等随运行变化的字段。
+正因如此，比对版本就足够了——版本没变就不可能产生 diff，每天的定时任务是无操作，
+而不是一次空提交。
 
 想手动做同样的事：
 

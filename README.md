@@ -166,11 +166,18 @@ calling and filter accordingly.
 
 ### Keeping the catalog current
 
-The catalog ships inside the Droid CLI, so that is what `manifest.json` tracks.
-The [refresh workflow](.github/workflows/update-models.yml) checks npm for a new
-`@factory/cli` version every day; when one appears it downloads that exact build,
-verifies its SHA-256, re-extracts the registry and commits the result. A new
-model therefore appears here without anyone editing Go or Markdown.
+The catalog ships inside the Droid CLI, so that is what `manifest.json` tracks —
+`cli.version` is the field that says which build it came from, and the proxy
+identifies itself upstream with that same version. The
+[refresh workflow](.github/workflows/update-models.yml) compares it against the
+latest `@factory/cli` on npm once a day. When they differ it downloads that exact
+build, verifies its SHA-256, checks the build reports the version it was
+published under, re-extracts the registry and commits the result.
+
+Extraction is deterministic: the same binary always yields byte-identical JSON,
+with no timestamps or other run-dependent fields. That is what makes comparing
+versions sufficient — an unchanged version cannot produce a diff, so the daily
+run is a no-op rather than an empty commit.
 
 To do the same by hand:
 

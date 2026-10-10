@@ -6,6 +6,11 @@ name: Refresh model catalog
 # refreshing means: notice a new version on npm, download that exact build,
 # re-extract the registry, cross-check it against the CLI's own model list, and
 # commit the result. Nothing here runs on a normal push.
+#
+# The version is the whole trigger. Extraction is deterministic — the same
+# binary always produces byte-identical JSON, with no timestamps — so comparing
+# cli.version in the manifest against npm is enough to decide whether there is
+# anything to do, and a same-version run cannot produce an empty commit.
 
 on:
   schedule:
@@ -14,7 +19,7 @@ on:
   workflow_dispatch:
     inputs:
       force:
-        description: Re-extract even when the version is unchanged
+        description: Re-extract even when the version is unchanged (for extractor changes)
         type: boolean
         default: false
 
@@ -35,21 +40,27 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Look up the latest CLI version
+      - name: Compare the manifest version against npm
         id: version
         run: |
           set -euo pipefail
           latest=$(curl -fsSL https://registry.npmjs.org/@factory/cli/latest |
             python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')
           current=$(python3 -c 'import json; print(json.load(open("manifest.json"))["cli"]["version"])')
-          echo "manifest has $current, npm has $latest"
+          if [ "$latest" = "$current" ]; then
+            echo "manifest is already at droid $current; nothing to do"
+            changed=false
+          else
+            echo "manifest is at $current, npm has $latest"
+            changed=true
+          fi
+          if [ "${{ inputs.force }}" = "true" ]; then
+            echo "forced: re-extracting droid $latest regardless"
+            changed=true
+          fi
           {
             echo "latest=$latest"
-            if [ "$latest" = "$current" ] && [ "${{ inputs.force }}" != "true" ]; then
-              echo "changed=false"
-            else
-              echo "changed=true"
-            fi
+            echo "changed=$changed"
           } >> "$GITHUB_OUTPUT"
 
       - name: Download that CLI build
@@ -63,6 +74,14 @@ jobs:
           curl -fsSL -o /tmp/droid.sha256 "$base/droid.sha256"
           (cd /tmp && printf '%s  droid\n' "$(cat droid.sha256)" | sha256sum -c -)
           chmod +x /tmp/droid
+          # The published version and the build must agree, or the catalog would
+          # claim to be a release it was not extracted from.
+          built=$(HOME="$(mktemp -d)" /tmp/droid --version)
+          echo "downloaded build reports $built"
+          if [ "$built" != "$VER" ]; then
+            echo "::error::release $VER reports version $built"
+            exit 1
+          fi
 
       - name: Re-extract the registry
         if: steps.version.outputs.changed == 'true'
@@ -72,12 +91,28 @@ jobs:
           set -euo pipefail
           # The CLI prints its own selectable models in its help text. That list
           # is an independent statement of the catalog, so the extractor refuses
-          # to write a manifest missing any model the CLI names.
+          # to write a manifest missing any model the CLI names, or disagreeing
+          # with it about which models are retired.
           HOME="$(mktemp -d)" /tmp/droid exec --help > /tmp/help.txt
           go run ./tools/extract-manifest /tmp/droid \
             --version "$VER" \
             --out manifest.json \
             --cross-check /tmp/help.txt
+          extracted=$(python3 -c 'import json; print(json.load(open("manifest.json"))["cli"]["version"])')
+          if [ "$extracted" != "$VER" ]; then
+            echo "::error::manifest claims $extracted after extracting $VER"
+            exit 1
+          fi
+
+          # The version-compare gate assumes extraction is deterministic: a
+          # run-dependent field would make every scheduled run look like a change.
+          go run ./tools/extract-manifest /tmp/droid --version "$VER" --out /tmp/manifest-again.json
+          if ! cmp -s manifest.json /tmp/manifest-again.json; then
+            echo "::error::extraction is not deterministic; the same binary produced two different manifests"
+            diff manifest.json /tmp/manifest-again.json | head -20
+            exit 1
+          fi
+          echo "extraction is deterministic"
 
       - name: Confirm the gateway still builds and the manifest parses
         if: steps.version.outputs.changed == 'true'
@@ -95,6 +130,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add manifest.json
+          # A forced run on an unchanged version lands here with nothing staged;
+          # that is a success, not a commit.
           if git diff --cached --quiet; then
             echo "manifest already matches droid $VER"
             exit 0
