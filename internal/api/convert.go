@@ -809,8 +809,11 @@ func (s *openAIToResponsesStream) handle(chunk map[string]any) [][]byte {
 				}
 				if rc, _ := delta["reasoning_content"].(string); rc != "" {
 					frames = append(frames, sseFrame("response.reasoning_summary_text.delta", rawJSON(map[string]any{
-						"type":  "response.reasoning_summary_text.delta",
-						"delta": rc,
+						"type":          "response.reasoning_summary_text.delta",
+						"item_id":       s.itemID,
+						"output_index":  s.msgIndex,
+						"content_index": 0,
+						"delta":         rc,
 					})))
 				}
 				// Tool calls -> function_call items with streamed arguments.

@@ -104,8 +104,13 @@ func ToMessages(req *ChatRequest, systemPrompt string, maxTokensDefault int) map
 	if req.TopP != nil {
 		out["top_p"] = *req.TopP
 	}
-	if req.ReasoningEffort != "" {
-		out["thinking"] = map[string]any{"type": "enabled", "budget_tokens": effortToBudget(req.ReasoningEffort)}
+	if req.ReasoningEffort != "" && !isOffEffort(req.ReasoningEffort) {
+		// The current gateway rejects thinking.type=enabled with a budget on
+		// the Claude 5.x models, and adaptive takes no budget at all — the
+		// effort arrives separately in output_config, where both old and new
+		// models honour it.
+		out["thinking"] = map[string]any{"type": "adaptive"}
+		out["output_config"] = map[string]any{"effort": req.ReasoningEffort}
 	}
 	if len(req.Tools) > 0 {
 		if tools := chatToolsToAnthropic(req.Tools); len(tools) > 0 {
@@ -185,19 +190,13 @@ func chatToolChoiceToAnthropic(raw json.RawMessage) map[string]any {
 	return nil
 }
 
-func effortToBudget(effort string) int {
+// isOffEffort reports whether an effort value means "no extended thinking".
+func isOffEffort(effort string) bool {
 	switch effort {
-	case "low", "minimal":
-		return 4096
-	case "medium":
-		return 12288
-	case "high":
-		return 24576
-	case "xhigh", "max":
-		return 40960
-	default:
-		return 8192
+	case "off", "none", "minimal":
+		return true
 	}
+	return false
 }
 
 // contentBlocks normalizes heterogeneous content values into block maps.
