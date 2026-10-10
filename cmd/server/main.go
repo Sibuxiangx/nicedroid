@@ -91,6 +91,8 @@ func main() {
 	g.POST("/v1/messages/count_tokens", proxy.CountTokens)
 	g.POST("/v1/responses", proxy.Responses)
 	g.POST("/v1/generate", proxy.GeneratePassthrough)
+	// Google's native URL shape, for SDKs that build it that way.
+	g.POST("/v1beta/models/:model", proxy.GoogleGenerateContent)
 	e.GET("/healthz", proxy.Health)
 
 	// Admin API.

@@ -54,8 +54,12 @@ These are load-bearing. Getting one wrong makes every upstream request fail.
   There is deliberately no fallback from a standard model to a Droid Core model.
   Droid Core models are only used when the caller asks for them by name.
 - **Gemini is passthrough-only.** `gemini-*` models are never translated between
-  wire formats and never participate in interchange; they are reachable only
-  through `/v1/generate`, which forwards the payload verbatim.
+  wire formats and never participate in interchange; they are reachable through
+  `/v1/generate` and through the Google-native `/v1beta/models/<m>:generateContent`
+  routes, which forward the payload verbatim. The one thing the passthrough does
+  add is the required Droid system prompt, prepended to `systemInstruction` when
+  the client did not already lead with it — SDK clients arriving over the native
+  route will not have thought to send it, and the gateway would 403 them.
 - **Proxy auth is default-deny.** `/v1/*` refuses every request until an enabled
   client key exists, because those endpoints spend the operator's upstream
   quota. An earlier revision served them openly when no keys were configured,

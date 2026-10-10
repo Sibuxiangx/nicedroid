@@ -36,6 +36,14 @@ func (h *Handler) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			token = c.Request().Header.Get("x-api-key")
 		}
 		if token == "" {
+			// The Google native endpoint is addressed by SDKs that carry the
+			// key the way Google's own API expects.
+			token = c.Request().Header.Get("x-goog-api-key")
+		}
+		if token == "" {
+			token = c.QueryParam("key")
+		}
+		if token == "" {
 			return openAIError(c, http.StatusUnauthorized, "authentication_error", "missing API key")
 		}
 		k, enabled, err := h.Store.LookupClientKey(token)

@@ -313,6 +313,86 @@ func (h *Handler) GeneratePassthrough(c echo.Context) error {
 	if modelID == "" {
 		return c.JSON(http.StatusBadRequest, map[string]any{"error": "model is required"})
 	}
+	return h.googleGenerate(c, modelID, raw)
+}
+
+// googleMethodSuffix matches the action Google's native URL appends to the
+// model, which the routes below strip to find the model ID.
+var googleMethodSuffix = []string{":streamGenerateContent", ":generateContent"}
+
+// GoogleGenerateContent serves POST /v1beta/models/<model>:generateContent,
+// the URL shape Google's own SDKs (and therefore @ai-sdk/google) use. It is
+// the same passthrough as /v1/generate with the model named in the path.
+func (h *Handler) GoogleGenerateContent(c echo.Context) error {
+	return h.googleFromPath(c, false)
+}
+
+// GoogleGenerateContentStream serves POST /v1beta/models/<model>:streamGenerateContent.
+func (h *Handler) GoogleGenerateContentStream(c echo.Context) error {
+	return h.googleFromPath(c, true)
+}
+
+func (h *Handler) googleFromPath(c echo.Context, streaming bool) error {
+	modelID := c.Param("model")
+	for _, suffix := range googleMethodSuffix {
+		modelID = strings.TrimSuffix(modelID, suffix)
+	}
+	body, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]any{"error": "cannot read body"})
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]any{"error": "invalid JSON body"})
+	}
+	return h.googleGenerate(c, modelID, raw)
+}
+
+// googleLeadsWithGate reports whether the system instruction already opens
+// with the required prompt, so injecting it again would double it up.
+func googleLeadsWithGate(si any, prompt string) bool {
+	m, ok := si.(map[string]any)
+	if !ok {
+		return false
+	}
+	parts, ok := m["parts"].([]any)
+	if !ok || len(parts) == 0 {
+		return false
+	}
+	first, _ := parts[0].(map[string]any)
+	if first == nil {
+		return false
+	}
+	t, _ := first["text"].(string)
+	return strings.HasPrefix(t, prompt)
+}
+
+// googlePrependSystem returns a system instruction that leads with the given
+// prompt, accepting the string and the parts-array forms Google's SDKs send.
+func googlePrependSystem(si any, prompt string) map[string]any {
+	gate := map[string]any{"text": prompt}
+	switch v := si.(type) {
+	case string:
+		if v == "" {
+			return map[string]any{"parts": []any{gate}}
+		}
+		return map[string]any{"parts": []any{gate, map[string]any{"text": v}}}
+	case map[string]any:
+		parts, _ := v["parts"].([]any)
+		v["parts"] = append([]any{gate}, parts...)
+		return v
+	default:
+		return map[string]any{"parts": []any{gate}}
+	}
+}
+
+// googleGenerate forwards a Gemini request to the gateway's Google endpoint.
+// The gateway names the model in the body, so both entry points converge here
+// once the model is known.
+func (h *Handler) googleGenerate(c echo.Context, modelID string, raw map[string]any) error {
+	if modelID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]any{"error": "model is required"})
+	}
 	m, ok := config.LookupModel(modelID)
 	if !ok {
 		return c.JSON(http.StatusNotFound, map[string]any{"error": fmt.Sprintf("model %q not found", modelID)})
@@ -320,10 +400,25 @@ func (h *Handler) GeneratePassthrough(c echo.Context) error {
 	if !m.Passthrough {
 		return c.JSON(http.StatusBadRequest, map[string]any{"error": fmt.Sprintf("model %q is not a passthrough model", modelID)})
 	}
+	raw["model"] = m.ID
+	// The gateway rejects every LLM request that does not lead with the Droid
+	// system prompt, and SDK clients arriving through the native route will
+	// not have thought to send one. Prepend it; the client's own instruction
+	// follows, as with the other families.
+	if sp := h.systemPrompt(); sp != "" && !googleLeadsWithGate(raw["systemInstruction"], sp) {
+		raw["systemInstruction"] = googlePrependSystem(raw["systemInstruction"], sp)
+	}
+	body, err := json.Marshal(raw)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]any{"error": "cannot encode request"})
+	}
 
 	start := time.Now()
 	clientKey := clientKeyFromContext(c)
 	stream, _ := raw["stream"].(bool)
+	if c.Request().URL.Query().Get("alt") == "sse" {
+		stream = true
+	}
 
 	ctx := c.Request().Context()
 	if h.Cfg.RequestTimeout > 0 {

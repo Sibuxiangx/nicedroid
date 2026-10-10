@@ -87,11 +87,11 @@ func TestPickBestIgnoresFailingProviders(t *testing.T) {
 }
 
 func TestBenchmarkPromptClearsTheCacheFloor(t *testing.T) {
-	// Providers refuse to cache a prompt under ~1024 tokens, so a short
-	// benchmark prompt would report every provider as cache-free.
+	// Providers refuse to cache a prompt under ~1024 tokens, and some only
+	// report a hit past a few thousand, so the prefix targets ~8k.
 	n := len(benchmarkCachePrefix) / 4
-	if n < 1200 {
-		t.Fatalf("benchmark cache prefix is ~%d tokens, want >= 1200", n)
+	if n < 7000 {
+		t.Fatalf("benchmark cache prefix is ~%d tokens, want >= 7000", n)
 	}
 	if benchmarkCachePrefix != buildBenchmarkPrefix() {
 		t.Fatal("benchmark cache prefix is not deterministic")

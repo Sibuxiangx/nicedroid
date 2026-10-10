@@ -41,6 +41,8 @@ Key 池管理、供应商路由和逐请求成本核算。
 | `POST` | `/v1/messages/count_tokens` | Anthropic token 计数      |
 | `POST` | `/v1/responses`             | OpenAI Responses          |
 | `POST` | `/v1/generate`              | Google generate（透传）   |
+| `POST` | `/v1beta/models/<m>:generateContent`       | Google 原生路径           |
+| `POST` | `/v1beta/models/<m>:streamGenerateContent` | Google 原生路径           |
 | `GET`  | `/v1/models`                | 模型列表                  |
 | `GET`  | `/healthz`                  | 健康检查                  |
 
@@ -142,8 +144,15 @@ curl http://localhost:3000/v1/responses \
 提取时会被过滤掉。
 
 配额分两个池：**standard**（Claude、GPT、Gemini、Grok）与 **core**（便宜的开源模型，
-其中多个由不止一家后端承载）。Gemini 仅支持透传：只能通过 `/v1/generate` 调用，
-不参与协议转换。
+其中多个由不止一家后端承载）。Gemini 仅支持透传：可通过 `/v1/generate` 或 Google 原生的
+`/v1beta/models/<model>:generateContent` 调用，不参与协议转换。
+
+### 在 OpenCode 里使用
+
+仓库根目录的 `opencode.json` 由 `go run ./tools/gen-opencode` 从代理所用的同一份目录生成，
+模型列表无需手写。把 `NICEDROID_API_KEY` 指向某个客户端密钥即可，OpenCode 会按模型选择
+合适的 SDK：GPT 系走 `@ai-sdk/openai`（上游是 Responses）、Gemini 走 `@ai-sdk/google`，
+其余走 `@ai-sdk/openai-compatible`。
 
 管理后台按平台分区展示模型，并把 CLI 已下线的模型折叠起来——写作时为 59 个在用、
 34 个历史。注册表给出弃用日期、或已从 CLI 自己的选择器中隐藏的，都算历史模型；

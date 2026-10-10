@@ -497,10 +497,19 @@ func rewriteToolsForResponses(raw json.RawMessage) []map[string]any {
 	}
 	out := make([]map[string]any, 0, len(tools))
 	for _, t := range tools {
+		// The Responses API requires type:function on every tool, which the
+		// nested chat form carries one level up from the function object.
+		typ, _ := t["type"].(string)
 		if fn, ok := t["function"].(map[string]any); ok {
 			delete(fn, "strict")
+			if typ != "" {
+				fn["type"] = typ
+			}
 			out = append(out, fn)
 		} else {
+			if typ != "" {
+				t["type"] = typ
+			}
 			out = append(out, t)
 		}
 	}

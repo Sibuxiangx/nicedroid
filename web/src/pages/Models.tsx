@@ -141,7 +141,9 @@ function ModelRow({ m, legacy, onPickProvider, onBenchmark }: RowProps) {
         {(m.reasoning_efforts ?? []).join(" / ") || "-"}
       </TableCell>
       <TableCell className="text-right">
-        {!single && !m.passthrough && (
+        {/* Single-provider models have nothing to pin, but the probe still
+            measures their cache behaviour and streaming speed. */}
+        {!m.passthrough && (
           <Button size="sm" variant="outline" onClick={() => onBenchmark(m)}>
             <Gauge className="mr-1 h-4 w-4" />
             测速

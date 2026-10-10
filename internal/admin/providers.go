@@ -110,18 +110,17 @@ const benchmarkTask = "Write the integers from 1 to 300, one per line, with no o
 
 // benchmarkCachePrefix is a long, byte-stable block appended to the system
 // prompt. It has to clear the ~1024-token floor every provider applies before
-// it will cache a prefix, and be identical across rounds so round N can hit
-// what round N-1 wrote. A short prefix would make every provider look
-// cache-free no matter how good its cache is. Built once at startup.
+// it will cache a prefix — with a wide margin, because some providers only
+// report a hit past a few thousand prompt tokens — and be identical across
+// rounds so round N can hit what round N-1 wrote. Built once at startup.
 var benchmarkCachePrefix = buildBenchmarkPrefix()
 
-// buildBenchmarkPrefix emits a stable block of filler long enough to clear the
-// cache minimum, with enough variation between lines that a provider cannot
-// collapse it to a handful of tokens.
+// buildBenchmarkPrefix emits that stable block, with enough variation between
+// lines that a provider cannot collapse it to a handful of tokens.
 func buildBenchmarkPrefix() string {
 	var b strings.Builder
 	b.WriteString("Repository conventions reference:\n")
-	for i := 1; i <= 50; i++ {
+	for i := 1; i <= 170; i++ {
 		fmt.Fprintf(&b, "%03d. Module %d follows the house style: exported identifiers use MixedCaps, "+
 			"errors are wrapped with the %%w verb, every public function carries a doc comment "+
 			"beginning with its own name, and tests live beside the code they cover.\n", i, i)
@@ -174,9 +173,6 @@ func (a *Admin) BenchmarkProviders(c echo.Context) error {
 	m, ok := config.LookupModel(c.Param("id"))
 	if !ok {
 		return c.JSON(http.StatusNotFound, map[string]any{"error": "model not found"})
-	}
-	if m.Passthrough {
-		return c.JSON(http.StatusBadRequest, map[string]any{"error": "passthrough models have no provider list to test"})
 	}
 	var body struct {
 		Providers []string `json:"providers"`
@@ -410,6 +406,20 @@ func (a *Admin) benchProvider(parent context.Context, m config.Model, provider s
 		upBody = upstream.ToMessages(creq, prompt, benchmarkMaxToken)
 	case config.FamilyResponses:
 		upBody = upstream.ToResponses(creq, prompt)
+	case config.FamilyGoogle:
+		// generateContent takes the model in the body, not the path.
+		upBody = map[string]any{
+			"model":             m.ID,
+			"systemInstruction": map[string]any{"parts": []any{map[string]any{"text": prompt}}},
+			"contents": []any{map[string]any{
+				"role":  "user",
+				"parts": []any{map[string]any{"text": benchmarkTask}},
+			}},
+			"generationConfig": map[string]any{
+				"temperature":     1,
+				"maxOutputTokens": benchmarkMaxToken,
+			},
+		}
 	default:
 		upBody = upstream.ToChatCompletions(creq, prompt)
 	}
@@ -576,6 +586,31 @@ func benchmarkDelta(family config.ModelFamily, ev map[string]any) benchDelta {
 			}
 		}
 		return benchDelta{}
+	case config.FamilyGoogle:
+		// generateContent frames carry no "type": candidates stream as they
+		// come, and the last frame carries cumulative usageMetadata.
+		d := benchDelta{}
+		if um, ok := ev["usageMetadata"].(map[string]any); ok {
+			d.prompt = intOf(um["promptTokenCount"])
+			d.outTokens = intOf(um["candidatesTokenCount"])
+			d.cached = intOf(um["cachedContentTokenCount"])
+		}
+		if cands, ok := ev["candidates"].([]any); ok && len(cands) > 0 {
+			if c, ok := cands[0].(map[string]any); ok {
+				if content, ok := c["content"].(map[string]any); ok {
+					if parts, ok := content["parts"].([]any); ok {
+						for _, p := range parts {
+							if pm, ok := p.(map[string]any); ok {
+								if t, ok := pm["text"].(string); ok {
+									d.text += t
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return d
 	default:
 		// OpenAI chat/completions: deltas carry content, the last chunk carries
 		// usage when stream_options.include_usage is set.

@@ -71,6 +71,9 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
   const abortRef = useRef<AbortController | null>(null)
 
   const providers = useMemo(() => model?.providers ?? [], [model])
+  // Nothing to pin when the model has a single backend, so the measurement is
+  // purely informational.
+  const single = providers.length <= 1
 
   function reset() {
     setRows(
@@ -207,10 +210,11 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
       return
     }
     if (!autoApply || appliedRef.current || !best?.provider) return
+    if (single) return
     appliedRef.current = true
     void apply(best.provider)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, autoApply, best?.provider])
+  }, [phase, autoApply, best?.provider, single])
 
   return (
     <Dialog open={!!model} onOpenChange={(open) => !open && onClose()}>
@@ -219,8 +223,9 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
           <DialogTitle>供应商测速 · {model?.display_name}</DialogTitle>
           <DialogDescription>
             分两组探测：速度组 2 轮，用长生成任务测端到端吞吐（输出 token ÷
-            总耗时）；缓存组 {rounds} 轮重复同一请求，测提示词命中缓存的占比。命中率 ≥
-            {best?.bar ?? 90}% 才认为该供应商可用于 agent 场景，达标者中再选最快的。
+            总耗时）；缓存组 {rounds} 轮重复同一请求（约 8000 token
+            的稳定前缀），测提示词命中缓存的占比。命中率 ≥ {best?.bar ?? 90}%
+            才认为该供应商可用于 agent 场景，达标者中再选最快的。
           </DialogDescription>
         </DialogHeader>
 
@@ -251,7 +256,7 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
                         {cacheGood ? "缓存最优" : "最快"}
                       </Badge>
                     )}
-                    {model?.pinned_provider === row.provider && (
+                    {model?.pinned_provider === row.provider && !single && (
                       <Badge variant="secondary" className="text-[10px]">
                         已固定
                       </Badge>
@@ -331,10 +336,12 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
         </div>
 
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Switch checked={autoApply} onCheckedChange={setAutoApply} />
-            <span className="text-sm">测试完成后自动固定最优供应商（缓存优先）</span>
-          </div>
+          {!single && (
+            <div className="flex items-center gap-2">
+              <Switch checked={autoApply} onCheckedChange={setAutoApply} />
+              <span className="text-sm">测试完成后自动固定最优供应商（缓存优先）</span>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">缓存轮数</span>
             <Select value={String(rounds)} onValueChange={(v) => setRounds(Number(v))}>
@@ -353,11 +360,17 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
 
         <DialogFooter className="sm:justify-between">
           <div className="text-xs text-muted-foreground">
-            {best?.provider
-              ? `最佳：${best.provider}（缓存 ${best.cacheHit.toFixed(1)}% · ${best.tps.toFixed(1)} tok/s）`
-              : phase === "running"
-                ? "测试进行中…"
-                : "点击开始测试"}
+            {single
+              ? best?.provider
+                ? `${best.provider}（缓存 ${best.cacheHit.toFixed(1)}% · ${best.tps.toFixed(1)} tok/s）`
+                : phase === "running"
+                  ? "测试进行中…"
+                  : "该模型只有一家供应商，仅测速不固定"
+              : best?.provider
+                ? `最佳：${best.provider}（缓存 ${best.cacheHit.toFixed(1)}% · ${best.tps.toFixed(1)} tok/s）`
+                : phase === "running"
+                  ? "测试进行中…"
+                  : "点击开始测试"}
           </div>
           <div className="flex gap-2">
             {phase === "running" ? (
@@ -371,14 +384,16 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
                 {finished ? "重新测试" : "开始测试"}
               </Button>
             )}
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={!best?.provider}
-              onClick={() => best?.provider && apply(best.provider)}
-            >
-              应用最佳
-            </Button>
+            {!single && (
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={!best?.provider}
+                onClick={() => best?.provider && apply(best.provider)}
+              >
+                应用最佳
+              </Button>
+            )}
           </div>
         </DialogFooter>
       </DialogContent>
