@@ -1,6 +1,5 @@
 # Build output (regenerate with ./build.sh)
 /nicedroid
-/droid2api
 
 # SQLite database — contains real upstream API keys, never commit
 *.db

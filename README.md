@@ -9,8 +9,12 @@ Anthropic SDK at it and you get Droid's models, including the cheap open-weight
 an embedded admin console for quota tracking, key pooling, provider routing and
 per-request cost.
 
-> Previously released as **droid2api**. If you came here searching for
-> `droid2api`, this is the same project under its new name.
+> [!IMPORTANT]
+> **For learning and reference only.** This is an unofficial,
+> reverse-engineered client for internal, undocumented endpoints. It is
+> published to document how the gateway behaves, not for production use,
+> resale, or as a replacement for the official product. Not affiliated with
+> or endorsed by Factory.
 
 [中文文档 →](README.zh-CN.md)
 
@@ -231,7 +235,13 @@ reasoning behind the product policies. In short: `./build.sh` builds everything,
 there is no test suite, and changes are verified by running the server and
 exercising the endpoints with `curl`.
 
-## License
+## License and intent
 
-No license has been chosen yet. Until one is added, the code is all rights
-reserved.
+No license is granted. The code is published **for learning and reference
+only**: it documents how the gateway's wire formats, model catalog and credit
+model work, and is meant as a study aid for anyone building similar tooling.
+
+This is a reverse-engineering project against internal, undocumented endpoints.
+It is not affiliated with, endorsed by, or supported by Factory. Please do not
+resell it, run it as a service for others, or depend on it in production. All
+rights reserved.
