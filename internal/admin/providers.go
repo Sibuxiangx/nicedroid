@@ -92,26 +92,47 @@ func contains(list []string, v string) bool {
 // ---- provider benchmark ----
 
 const (
-	// A longer generation keeps the measurement window wide enough that timing
-	// jitter does not swamp the provider-to-provider difference.
-	benchmarkPrompt    = "Write the integers from 1 to 300, one per line, with no other text and no commentary."
+	// benchmarkMaxToken and the timeout bound one probe; the round counts
+	// control how many chances each provider gets.
 	benchmarkMaxToken  = 850
 	benchmarkTimeout   = 90 * time.Second
-	benchmarkRounds    = 2
-	benchmarkMaxRounds = 3
+	benchmarkRounds    = 3
+	benchmarkMaxRounds = 5
 )
+
+// benchmarkPrompt has to clear the ~1024-token floor every provider applies
+// before it will cache a prefix, and be byte-identical across rounds so round N
+// can hit what round N-1 wrote. A short prompt would make every provider look
+// cache-free no matter how good its cache is. Built once at startup.
+var benchmarkPrompt = buildBenchmarkPrompt()
+
+// buildBenchmarkPrompt emits a stable block of filler long enough to clear the
+// cache minimum, with enough variation between lines that a provider cannot
+// collapse it to a handful of tokens.
+func buildBenchmarkPrompt() string {
+	var b strings.Builder
+	b.WriteString("Repository conventions reference:\n")
+	for i := 1; i <= 50; i++ {
+		fmt.Fprintf(&b, "%03d. Module %d follows the house style: exported identifiers use MixedCaps, "+
+			"errors are wrapped with the %%w verb, every public function carries a doc comment "+
+			"beginning with its own name, and tests live beside the code they cover.\n", i, i)
+	}
+	return b.String()
+}
 
 // BenchmarkResult is one provider's streaming probe outcome.
 type BenchmarkResult struct {
-	Provider  string  `json:"provider"`
-	OK        bool    `json:"ok"`
-	Round     int     `json:"round"`
-	TTFTMs    int     `json:"ttft_ms"`
-	ElapsedMs int     `json:"elapsed_ms"`
-	Tokens    int     `json:"tokens"`
-	Chars     int     `json:"chars"`
-	TPS       float64 `json:"tps"`
-	Error     string  `json:"error,omitempty"`
+	Provider     string  `json:"provider"`
+	OK           bool    `json:"ok"`
+	Round        int     `json:"round"`
+	TTFTMs       int     `json:"ttft_ms"`
+	ElapsedMs    int     `json:"elapsed_ms"`
+	Tokens       int     `json:"tokens"`
+	Chars        int     `json:"chars"`
+	TPS          float64 `json:"tps"`
+	PromptTokens int     `json:"prompt_tokens"`
+	CachedTokens int     `json:"cached_tokens"`
+	Error        string  `json:"error,omitempty"`
 }
 
 // ProviderSummary aggregates a provider's rounds into one comparable figure.
@@ -122,7 +143,12 @@ type ProviderSummary struct {
 	TTFTMs   int     `json:"ttft_ms"`
 	RoundsOK int     `json:"rounds_ok"`
 	Rounds   int     `json:"rounds"`
-	Error    string  `json:"error,omitempty"`
+	// CacheHitPct is the average share of the prompt served from cache, over
+	// the rounds that could hit (round 1 writes the cache). CacheRounds is 0
+	// when the provider reported no usable cache figures.
+	CacheHitPct float64 `json:"cache_hit_pct"`
+	CacheRounds int     `json:"cache_rounds"`
+	Error       string  `json:"error,omitempty"`
 }
 
 // BenchmarkProviders streams the same generation through every provider of a
@@ -200,31 +226,69 @@ func (a *Admin) BenchmarkProviders(c echo.Context) error {
 	}
 
 	summaries := make([]ProviderSummary, 0, len(targets))
-	best := ""
-	bestTPS := 0.0
 	for _, p := range targets {
-		s := summarizeProvider(p, collected[p], rounds)
-		summaries = append(summaries, s)
-		if s.OK && s.TPS > bestTPS {
-			bestTPS = s.TPS
-			best = p
+		summaries = append(summaries, summarizeProvider(p, collected[p], rounds))
+	}
+	best, bestSum := pickBest(summaries)
+	if best != "" {
+		// Remember the outcome so the autoselector can route to the backend
+		// that caches without the operator re-running the benchmark.
+		if raw, err := json.Marshal(config.ProviderBenchmark{
+			Version:  config.ManifestVersion(),
+			Best:     best,
+			CacheHit: bestSum.CacheHitPct,
+			TPS:      bestSum.TPS,
+		}); err == nil {
+			_ = a.Store.SetSetting(config.BenchmarkSettingKey(m.ID), string(raw))
 		}
 	}
 	_ = send("summary", map[string]any{
-		"model":     m.ID,
-		"providers": summaries,
-		"best":      best,
-		"best_tps":  math.Round(bestTPS*10) / 10,
+		"model":          m.ID,
+		"providers":      summaries,
+		"best":           best,
+		"best_tps":       bestSum.TPS,
+		"best_cache_hit": bestSum.CacheHitPct,
+		"cache_hit_bar":  config.CacheHitBar,
 	})
 	return nil
 }
 
+// pickBest ranks providers cache-first: among those that clear the cache bar
+// the fastest wins, and when nobody clears it raw speed decides. A provider
+// that cannot cache is rarely worth its speed, because an agent loop re-bills
+// the whole prompt on every turn.
+func pickBest(summaries []ProviderSummary) (string, ProviderSummary) {
+	var cached, fastest ProviderSummary
+	for _, s := range summaries {
+		if !s.OK {
+			continue
+		}
+		if s.CacheRounds > 0 && s.CacheHitPct >= config.CacheHitBar {
+			if cached.Provider == "" || s.TPS > cached.TPS {
+				cached = s
+			}
+		}
+		if fastest.Provider == "" || s.TPS > fastest.TPS {
+			fastest = s
+		}
+	}
+	if cached.Provider != "" {
+		return cached.Provider, cached
+	}
+	if fastest.Provider != "" {
+		return fastest.Provider, fastest
+	}
+	return "", ProviderSummary{}
+}
+
 // summarizeProvider reduces a provider's rounds to a median TPS and TTFT so a
-// single lucky round cannot decide the winner.
+// single lucky round cannot decide the winner, plus an average cache hit rate
+// over the rounds that could actually hit.
 func summarizeProvider(provider string, results []BenchmarkResult, rounds int) ProviderSummary {
 	s := ProviderSummary{Provider: provider, Rounds: rounds}
 	var tps []float64
 	var ttfts []int
+	cached, prompt, cacheRounds := 0, 0, 0
 	lastErr := ""
 	for _, r := range results {
 		if !r.OK {
@@ -236,6 +300,13 @@ func summarizeProvider(provider string, results []BenchmarkResult, rounds int) P
 		tps = append(tps, r.TPS)
 		if r.TTFTMs > 0 {
 			ttfts = append(ttfts, r.TTFTMs)
+		}
+		// Round 1 writes the cache, so counting it would cap a two-round run at
+		// 50% and make every provider look unusable.
+		if r.Round > 1 && r.PromptTokens > 0 {
+			cached += r.CachedTokens
+			prompt += r.PromptTokens
+			cacheRounds++
 		}
 	}
 	s.RoundsOK = len(tps)
@@ -250,6 +321,10 @@ func summarizeProvider(provider string, results []BenchmarkResult, rounds int) P
 	s.TPS = math.Round(medianFloat(tps)*10) / 10
 	if len(ttfts) > 0 {
 		s.TTFTMs = medianInt(ttfts)
+	}
+	if cacheRounds > 0 && prompt > 0 {
+		s.CacheRounds = cacheRounds
+		s.CacheHitPct = math.Round(float64(cached)/float64(prompt)*1000) / 10
 	}
 	return s
 }
@@ -340,26 +415,34 @@ func (a *Admin) benchProvider(parent context.Context, m config.Model, provider s
 
 	var firstAt time.Time
 	chars := 0
-	usageTokens := 0
+	usageTokens, promptTokens, cachedTokens := 0, 0, 0
 
 	_ = upstream.ParseSSE(resp.Body, func(payload []byte) error {
 		var ev map[string]any
 		if json.Unmarshal(payload, &ev) != nil {
 			return nil
 		}
-		s, tok := benchmarkDelta(m.Family, ev)
-		if s != "" {
+		d := benchmarkDelta(m.Family, ev)
+		if d.text != "" {
 			if firstAt.IsZero() {
 				firstAt = time.Now()
 			}
-			chars += len(s)
+			chars += len(d.text)
 		}
-		if tok > usageTokens {
-			usageTokens = tok
+		if d.outTokens > usageTokens {
+			usageTokens = d.outTokens
+		}
+		if d.prompt > promptTokens {
+			promptTokens = d.prompt
+		}
+		if d.cached > cachedTokens {
+			cachedTokens = d.cached
 		}
 		return nil
 	})
 
+	res.PromptTokens = promptTokens
+	res.CachedTokens = cachedTokens
 	res.ElapsedMs = int(time.Since(start).Milliseconds())
 	res.Chars = chars
 	if !firstAt.IsZero() {
@@ -409,56 +492,82 @@ func benchmarkEffort(m config.Model) string {
 	return m.DefaultReasonEffort
 }
 
-// benchmarkDelta extracts streamed text and reported output tokens from one
-// SSE event in whichever wire format the model family speaks.
-func benchmarkDelta(family config.ModelFamily, ev map[string]any) (string, int) {
+// benchDelta is what one SSE event contributes to the measurement.
+type benchDelta struct {
+	text      string
+	outTokens int
+	prompt    int
+	cached    int
+}
+
+// benchmarkDelta extracts streamed text, output tokens and prompt cache figures
+// from one SSE event in whichever wire format the model family speaks.
+func benchmarkDelta(family config.ModelFamily, ev map[string]any) benchDelta {
 	switch family {
 	case config.FamilyMessages:
 		switch ev["type"] {
 		case "content_block_delta":
 			if d, ok := ev["delta"].(map[string]any); ok {
 				if t, ok := d["text"].(string); ok {
-					return t, 0
+					return benchDelta{text: t}
+				}
+			}
+		case "message_start":
+			// Anthropic's input_tokens excludes the cached portion, so the
+			// prompt total has to be reassembled from the three fields.
+			if msg, ok := ev["message"].(map[string]any); ok {
+				if u, ok := msg["usage"].(map[string]any); ok {
+					in := intOf(u["input_tokens"])
+					read := intOf(u["cache_read_input_tokens"])
+					write := intOf(u["cache_creation_input_tokens"])
+					return benchDelta{prompt: in + read + write, cached: read}
 				}
 			}
 		case "message_delta":
 			if u, ok := ev["usage"].(map[string]any); ok {
-				return "", intOf(u["output_tokens"])
+				return benchDelta{outTokens: intOf(u["output_tokens"])}
 			}
 		}
-		return "", 0
+		return benchDelta{}
 	case config.FamilyResponses:
 		switch ev["type"] {
 		case "response.output_text.delta":
 			if d, ok := ev["delta"].(string); ok {
-				return d, 0
+				return benchDelta{text: d}
 			}
 		case "response.completed":
 			if r, ok := ev["response"].(map[string]any); ok {
 				if u, ok := r["usage"].(map[string]any); ok {
-					return "", intOf(u["output_tokens"])
+					d := benchDelta{prompt: intOf(u["input_tokens"]), outTokens: intOf(u["output_tokens"])}
+					if det, ok := u["input_tokens_details"].(map[string]any); ok {
+						d.cached = intOf(det["cached_tokens"])
+					}
+					return d
 				}
 			}
 		}
-		return "", 0
+		return benchDelta{}
 	default:
 		// OpenAI chat/completions: deltas carry content, the last chunk carries
 		// usage when stream_options.include_usage is set.
-		out := ""
 		if choices, ok := ev["choices"].([]any); ok && len(choices) > 0 {
 			if ch, ok := choices[0].(map[string]any); ok {
 				if d, ok := ch["delta"].(map[string]any); ok {
 					if t, ok := d["content"].(string); ok {
-						out = t
+						return benchDelta{text: t}
 					}
 				}
 			}
 		}
-		tok := 0
+		d := benchDelta{}
 		if u, ok := ev["usage"].(map[string]any); ok {
-			tok = intOf(u["completion_tokens"])
+			d.outTokens = intOf(u["completion_tokens"])
+			d.prompt = intOf(u["prompt_tokens"])
+			if det, ok := u["prompt_tokens_details"].(map[string]any); ok {
+				d.cached = intOf(det["cached_tokens"])
+			}
 		}
-		return out, tok
+		return d
 	}
 }
 

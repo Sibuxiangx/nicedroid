@@ -214,10 +214,19 @@ func retryableProviderStatus(status int) bool {
 }
 
 // resolveProvider returns the provider to use for a model: the admin-pinned
-// override when set, otherwise the model's default.
+// override when set, then a measured benchmark result, then the catalog
+// default. The catalog order is not chosen for caching, and a backend that
+// cannot cache re-bills the whole prompt every turn, so a measurement that
+// found one which does outranks it.
 func (h *Handler) resolveProvider(m config.Model) string {
 	if v, err := h.Store.GetProviderOverride(m.ID); err == nil && v != "" {
 		return v
+	}
+	if raw, err := h.Store.GetSetting(config.BenchmarkSettingKey(m.ID), ""); err == nil {
+		if b, ok := config.ParseProviderBenchmark(raw); ok &&
+			b.Version == config.ManifestVersion() {
+			return b.Best
+		}
 	}
 	return m.DefaultProvider()
 }

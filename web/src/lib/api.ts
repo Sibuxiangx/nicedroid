@@ -178,6 +178,8 @@ export interface BenchmarkResult {
   tokens: number
   chars: number
   tps: number
+  prompt_tokens: number
+  cached_tokens: number
   error?: string
 }
 
@@ -188,6 +190,8 @@ export interface ProviderSummary {
   ttft_ms: number
   rounds_ok: number
   rounds: number
+  cache_hit_pct: number
+  cache_rounds: number
   error?: string
 }
 
@@ -195,7 +199,14 @@ export type BenchmarkEvent =
   | { type: "start"; providers: string[]; rounds: number }
   | { type: "probe"; provider: string; round: number }
   | { type: "result"; result: BenchmarkResult }
-  | { type: "summary"; summaries: ProviderSummary[]; best: string; best_tps: number }
+  | {
+      type: "summary"
+      summaries: ProviderSummary[]
+      best: string
+      best_tps: number
+      best_cache_hit: number
+      cache_hit_bar: number
+    }
 
 // benchmarkProviders runs the streaming provider probe and reports each
 // provider result as it arrives. The server pushes SSE events; fetch is used
@@ -255,6 +266,8 @@ export async function benchmarkProviders(
               summaries: parsed.providers ?? [],
               best: parsed.best ?? "",
               best_tps: parsed.best_tps ?? 0,
+              best_cache_hit: parsed.best_cache_hit ?? 0,
+              cache_hit_bar: parsed.cache_hit_bar ?? 90,
             })
         } catch {
           /* ignore malformed frame */

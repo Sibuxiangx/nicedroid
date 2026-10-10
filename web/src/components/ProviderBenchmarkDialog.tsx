@@ -45,14 +45,21 @@ interface Props {
 }
 
 // ProviderBenchmarkDialog streams the same generation through every backend of
-// a model, shows time-to-first-token and tokens per second as each one lands,
-// and can pin the fastest provider for that model.
+// a model, shows time-to-first-token, tokens per second and the prompt cache
+// hit rate as each one lands, and can pin the best provider for that model.
+// Cache dominates the ranking: a backend that cannot cache re-bills the whole
+// prompt every turn, which costs more than a slower one that can.
 export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
   const [rows, setRows] = useState<Row[]>([])
   const [phase, setPhase] = useState<Phase>("idle")
   const [autoApply, setAutoApply] = useState(true)
-  const [rounds, setRounds] = useState(2)
-  const [best, setBest] = useState<{ provider: string; tps: number } | null>(null)
+  const [rounds, setRounds] = useState(3)
+  const [best, setBest] = useState<{
+    provider: string
+    tps: number
+    cacheHit: number
+    bar: number
+  } | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
   const providers = useMemo(() => model?.providers ?? [], [model])
@@ -124,7 +131,12 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
                 }
               }),
             )
-            setBest({ provider: ev.best, tps: ev.best_tps })
+            setBest({
+              provider: ev.best,
+              tps: ev.best_tps,
+              cacheHit: ev.best_cache_hit,
+              bar: ev.cache_hit_bar,
+            })
             setPhase("done")
           }
         },
@@ -174,8 +186,9 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
         <DialogHeader>
           <DialogTitle>供应商测速 · {model?.display_name}</DialogTitle>
           <DialogDescription>
-            对同一提示词做流式生成，各供应商轮流各测 {rounds} 轮，取各轮中位数。TPS 为端到端吞吐
-            （输出 token ÷ 总耗时），不受上游缓冲影响。
+            用同一长提示词（约 2000 token，超过各家缓存下限）流式生成 {rounds} 轮。缓存命中率取第 2
+            轮起的平均值；TPS 为端到端吞吐（输出 token ÷ 总耗时）。命中率 ≥
+            {best?.bar ?? 90}% 才认为该供应商可用于 agent 场景，达标者中再选最快的。
           </DialogDescription>
         </DialogHeader>
 
@@ -197,7 +210,7 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
                     {isBest && (
                       <Badge className="text-[10px]">
                         <Zap className="mr-0.5 h-3 w-3" />
-                        最快
+                        {(s?.cache_hit_pct ?? 0) >= (best?.bar ?? 90) ? "缓存最优" : "最快"}
                       </Badge>
                     )}
                     {model?.pinned_provider === row.provider && (
@@ -218,6 +231,18 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
                   <div className="flex items-center gap-4 text-xs tabular-nums">
                     {(s?.ok || r?.ok) && (
                       <>
+                        {s && s.cache_rounds > 0 && (
+                          <span
+                            className={
+                              s.cache_hit_pct >= (best?.bar ?? 90)
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : "text-amber-600 dark:text-amber-400"
+                            }
+                            title={`第 2 轮起 ${s.cache_rounds} 轮平均值`}
+                          >
+                            缓存 <span className="font-semibold">{s.cache_hit_pct.toFixed(1)}%</span>
+                          </span>
+                        )}
                         <span className="text-muted-foreground">
                           TTFT <span className="font-medium text-foreground">{shownTTFT}ms</span>
                         </span>
@@ -250,7 +275,7 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Switch checked={autoApply} onCheckedChange={setAutoApply} />
-            <span className="text-sm">测试完成后自动固定最快供应商</span>
+            <span className="text-sm">测试完成后自动固定最优供应商（缓存优先）</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">轮数</span>
@@ -259,9 +284,10 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">1</SelectItem>
                 <SelectItem value="2">2</SelectItem>
                 <SelectItem value="3">3</SelectItem>
+                <SelectItem value="4">4</SelectItem>
+                <SelectItem value="5">5</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -270,7 +296,7 @@ export function ProviderBenchmarkDialog({ model, onClose, onApplied }: Props) {
         <DialogFooter className="sm:justify-between">
           <div className="text-xs text-muted-foreground">
             {best?.provider
-              ? `最佳：${best.provider}（${best.tps.toFixed(1)} tok/s）`
+              ? `最佳：${best.provider}（缓存 ${best.cacheHit.toFixed(1)}% · ${best.tps.toFixed(1)} tok/s）`
               : phase === "running"
                 ? "测试进行中…"
                 : "点击开始测试"}
