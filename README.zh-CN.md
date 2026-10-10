@@ -112,24 +112,59 @@ curl http://localhost:3000/v1/responses \
 
 ## 模型
 
-**standard 池** —— Claude Opus 5 / Sonnet 5 / Haiku、GPT-6 与 GPT-5.4 系列、
-Gemini 3 Pro 与 Flash（Gemini 仅透传，见下）。
+模型目录不在这个仓库里手工维护。[`manifest.json`](manifest.json) 是唯一事实来源
+（写作时为 93 个模型），内容从 Droid CLI 自己的模型注册表提取，Go 二进制在构建时嵌入该文件。
 
-**Droid Core 池** —— 便宜的开源模型，其中多个由多家后端承载：
+每个条目带上路由和计费所需的全部信息：
 
-| 模型                  | 供应商                         |
-| --------------------- | ------------------------------ |
-| `glm-5.3`             | fireworks、baseten、databricks |
-| `glm-5.3-flash`       | fireworks、baseten、databricks |
-| `kimi-k3`             | fireworks、baseten、databricks |
-| `deepseek-v4.1-flash` | fireworks、baseten、databricks |
-| `nemotron-3-ultra`    | baseten、fireworks             |
-| `qwen3.8-max`         | fireworks                      |
-| `inkling`             | fireworks                      |
-| `minimax-m3`          | fireworks                      |
-| `mistral-large-4`     | mistral                        |
+```json
+{
+  "id": "glm-5.3-flash",
+  "name": "GLM-5.3-Flash",
+  "provider": "factory",
+  "providers": ["fireworks", "baseten", "databricks"],
+  "quota_pool": "core",
+  "vision": true,
+  "reasoning": { "efforts": ["low", "high", "max"], "default": "high" },
+  "cost": {
+    "token_multiplier": 0.06,
+    "output_multiplier": 3.34,
+    "cache_read_multiplier": 0.2
+  }
+}
+```
 
-`GET /v1/models` 和管理后台会列出实时目录，含视觉支持、推理档位和成本倍率。
+`provider` 是承载该模型的平台，`providers` 是网关可以派发的后端。开源模型两者不同：
+它们属于 Factory，但由 fireworks、baseten、databricks 或 mistral 实际承载。
+云市场传输层（`azure_openai`、`bedrock_anthropic` 等）无法用 `x-api-provider` 选择，
+提取时会被过滤掉。
+
+配额分两个池：**standard**（Claude、GPT、Gemini、Grok）与 **core**（便宜的开源模型，
+其中多个由不止一家后端承载）。Gemini 仅支持透传：只能通过 `/v1/generate` 调用，
+不参与协议转换。
+
+管理后台按平台分区展示模型，并把 CLI 已下线的模型折叠起来——写作时为 59 个在用、
+34 个历史。注册表给出弃用日期、或已从 CLI 自己的选择器中隐藏的，都算历史模型；
+后台会同时显示弃用日期和建议的替代模型。`GET /v1/models` 也会列出历史模型，
+但带上 `deprecated`、`retired_on`、`replacement` 标记，方便已有客户端自行过滤。
+
+### 目录如何保持最新
+
+目录本身打包在 Droid CLI 里，所以 `manifest.json` 跟踪的就是 CLI 的版本。
+[刷新 workflow](.github/workflows/update-models.yml) 每天检查 npm 上 `@factory/cli`
+的新版本；一旦有新版本，它会下载对应的构建产物、校验 SHA-256、重新提取注册表并提交结果。
+因此新模型会自动出现在这里，不需要任何人改 Go 或 Markdown。
+
+想手动做同样的事：
+
+```bash
+go run ./tools/extract-manifest ~/.local/bin/droid \
+  --version "$(droid --version)" \
+  --out manifest.json
+```
+
+提取器会自我校验：如果 manifest 缺少 CLI 自己在 `droid exec --help` 里列出的模型，
+它会拒绝写出文件。所以 bundle 结构变化会让任务失败，而不是悄悄让目录缩水。
 
 ## 供应商选择
 

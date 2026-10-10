@@ -1,0 +1,2876 @@
+{
+  "schema": 1,
+  "source": "droid-cli",
+  "generated_at": "2026-10-10T03:47:56Z",
+  "cli": {
+    "version": "0.238.0",
+    "user_agent": "factory-cli/0.238.0"
+  },
+  "models": [
+    {
+      "id": "aster-07-15",
+      "name": "Aster 07/15 (Preview)",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 2
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "atlas-07-21",
+      "name": "Atlas 07/21 (Preview)",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 2
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-3-5-haiku-20241022",
+      "name": "Haiku 3.5 v1",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none"
+        ],
+        "default": "none"
+      },
+      "cost": {
+        "token_multiplier": 0.32
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "claude-3-5-sonnet-20241022",
+      "name": "Sonnet 3.5 v2",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none"
+        ],
+        "default": "none"
+      },
+      "cost": {
+        "token_multiplier": 1.2
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "claude-3-7-sonnet-20250219",
+      "name": "Sonnet 3.7",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "bedrock_anthropic": "anthropic.claude-3-7-sonnet-20250219-v1:0",
+        "vertex_anthropic": "claude-3-7-sonnet"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "off"
+      },
+      "cost": {
+        "token_multiplier": 1.2
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "claude-fable-5",
+      "name": "Fable 5",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "bedrock_anthropic": "anthropic.claude-fable-5",
+        "vertex_anthropic": "claude-fable-5"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 4,
+        "output_multiplier": 5
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-fable-5.1",
+      "name": "Fable 5.1",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "anthropic": "claude-fable-5-1",
+        "bedrock_anthropic": "anthropic.claude-fable-5-1",
+        "vertex_anthropic": "claude-fable-5-1"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 4,
+        "output_multiplier": 5,
+        "cache_read_multiplier": 0.025
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-haiku-4-5-20251001",
+      "name": "Haiku 4.5",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "bedrock_anthropic": "anthropic.claude-haiku-4-5-20251001-v1:0",
+        "vertex_anthropic": "claude-haiku-4-5@20251001"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "off"
+      },
+      "cost": {
+        "token_multiplier": 0.4
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-haiku-5-5",
+      "name": "Haiku 5.5",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "anthropic": "claude-haiku-5-5",
+        "azure_anthropic": "claude-haiku-5-5",
+        "bedrock_anthropic": "anthropic.claude-haiku-5-5",
+        "vertex_anthropic": "claude-haiku-5-5"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.04,
+        "output_multiplier": 5
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-opus-4-1-20250805",
+      "name": "Opus 4.1",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "bedrock_anthropic": "anthropic.claude-opus-4-1-20250805-v1:0",
+        "vertex_anthropic": "claude-opus-4-1@20250805"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "off"
+      },
+      "cost": {
+        "token_multiplier": 6
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "claude-opus-4-5-20251101",
+      "name": "Opus 4.5",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "bedrock_anthropic": "anthropic.claude-opus-4-5-20251101-v1:0",
+        "vertex_anthropic": "claude-opus-4-5@20251101"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "off"
+      },
+      "cost": {
+        "token_multiplier": 2
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-opus-4-6",
+      "name": "Opus 4.6",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "azure_anthropic": "claude-opus-4-6",
+        "bedrock_anthropic": "anthropic.claude-opus-4-6-v1",
+        "snowflake": "claude-opus-4-6",
+        "vertex_anthropic": "claude-opus-4-6"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 2
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-opus-4-6-fast",
+      "name": "Opus 4.6 Fast Mode",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "snowflake": "claude-opus-4-6"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 12
+      },
+      "deprecated_on": "2026-06-29",
+      "replacement": "claude-opus-4-6",
+      "cli_visible": true
+    },
+    {
+      "id": "claude-opus-4-7",
+      "name": "Opus 4.7",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "bedrock_anthropic": "anthropic.claude-opus-4-7",
+        "vertex_anthropic": "claude-opus-4-7"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 2
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-opus-4-7-fast",
+      "name": "Opus 4.7 Fast Mode",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 12
+      },
+      "deprecated_on": "2026-07-24",
+      "replacement": "claude-opus-4-7",
+      "cli_visible": true
+    },
+    {
+      "id": "claude-opus-4-8",
+      "name": "Opus 4.8",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "azure_anthropic": "claude-opus-4-8",
+        "bedrock_anthropic": "anthropic.claude-opus-4-8",
+        "snowflake": "claude-opus-4-8",
+        "vertex_anthropic": "claude-opus-4-8"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 2
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-opus-4-8-fast",
+      "name": "Opus 4.8 Fast Mode",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 4
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-opus-5",
+      "name": "Opus 5",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "azure_anthropic": "claude-opus-5",
+        "bedrock_anthropic": "anthropic.claude-opus-5",
+        "snowflake": "claude-opus-5",
+        "vertex_anthropic": "claude-opus-5"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 2
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-opus-5-5",
+      "name": "Opus 5.5",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "azure_anthropic": "claude-opus-5-5",
+        "bedrock_anthropic": "anthropic.claude-opus-5-5",
+        "snowflake": "claude-opus-5-5",
+        "vertex_anthropic": "claude-opus-5-5"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 1.6,
+        "output_multiplier": 5,
+        "cache_read_multiplier": 0.05
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-opus-5-5-fast",
+      "name": "Opus 5.5 Fast Mode",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 3.2,
+        "output_multiplier": 5,
+        "cache_read_multiplier": 0.05
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-opus-5-fast",
+      "name": "Opus 5 Fast Mode",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 4
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-sonnet-4-20250514",
+      "name": "Sonnet 4",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "bedrock_anthropic": "anthropic.claude-sonnet-4-20250514-v1:0",
+        "vertex_anthropic": "claude-sonnet-4@20250514"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "off"
+      },
+      "cost": {
+        "token_multiplier": 1.2
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "claude-sonnet-4-5-20250929",
+      "name": "Sonnet 4.5",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "bedrock_anthropic": "anthropic.claude-sonnet-4-5-20250929-v1:0",
+        "vertex_anthropic": "claude-sonnet-4-5@20250929"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "off"
+      },
+      "cost": {
+        "token_multiplier": 1.2
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-sonnet-4-6",
+      "name": "Sonnet 4.6",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "bedrock_anthropic": "anthropic.claude-sonnet-4-6",
+        "snowflake": "claude-sonnet-4-6",
+        "vertex_anthropic": "claude-sonnet-4-6"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 1.2
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-sonnet-5",
+      "name": "Sonnet 5",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "azure_anthropic": "claude-sonnet-5",
+        "bedrock_anthropic": "anthropic.claude-sonnet-5",
+        "vertex_anthropic": "claude-sonnet-5"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.8,
+        "output_multiplier": 5
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "claude-sonnet-5-5",
+      "name": "Sonnet 5.5",
+      "provider": "anthropic",
+      "providers": [
+        "anthropic"
+      ],
+      "provider_models": {
+        "anthropic": "claude-sonnet-5-5",
+        "azure_anthropic": "claude-sonnet-5-5",
+        "bedrock_anthropic": "anthropic.claude-sonnet-5-5",
+        "vertex_anthropic": "claude-sonnet-5-5"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.8,
+        "output_multiplier": 5,
+        "cache_read_multiplier": 0.05
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "deepseek-v4-flash-0731",
+      "name": "DeepSeek V4 Flash 0731",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks",
+        "baseten"
+      ],
+      "provider_models": {
+        "baseten": "deepseek-ai/DeepSeek-V4.1-Flash",
+        "fireworks": "accounts/fireworks/models/deepseek-v4p1-flash"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "high",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.176,
+        "output_multiplier": 3,
+        "cache_read_multiplier": 0.032
+      },
+      "deprecated_on": "2026-09-25",
+      "replacement": "deepseek-v4.1-flash",
+      "cli_visible": true
+    },
+    {
+      "id": "deepseek-v4-pro",
+      "name": "DeepSeek V4 Pro",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks",
+        "baseten"
+      ],
+      "provider_models": {
+        "baseten": "deepseek-ai/DeepSeek-V4.1-Flash",
+        "fireworks": "accounts/fireworks/models/deepseek-v4p1-flash"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "high",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.528,
+        "output_multiplier": 3,
+        "cache_read_multiplier": 0.034
+      },
+      "deprecated_on": "2026-09-25",
+      "replacement": "deepseek-v4.1-flash",
+      "cli_visible": true
+    },
+    {
+      "id": "deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks",
+        "baseten",
+        "databricks"
+      ],
+      "provider_models": {
+        "baseten": "deepseek-ai/DeepSeek-V4.1-Flash",
+        "databricks": "databricks-deepseek-v4-1-flash",
+        "fireworks": "accounts/fireworks/models/deepseek-v4p1-flash"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "high",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.12,
+        "output_multiplier": 4,
+        "cache_read_multiplier": 0.024
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "garnet-07-15",
+      "name": "Garnet 07/15 (Preview)",
+      "provider": "google",
+      "providers": [
+        "google"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "medium",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.6
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "gemini-2.5-flash",
+      "name": "Gemini 2.5 Flash",
+      "provider": "google",
+      "providers": [
+        "google"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "dynamic",
+          "off",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "dynamic"
+      },
+      "cost": {
+        "token_multiplier": 0.12
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "gemini-2.5-pro",
+      "name": "Gemini 2.5 Pro",
+      "provider": "google",
+      "providers": [
+        "google"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.5
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "gemini-3-flash-preview",
+      "name": "Gemini 3 Flash",
+      "provider": "google",
+      "providers": [
+        "google"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "minimal",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.2
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "gemini-3-pro-preview",
+      "name": "Gemini 3 Pro",
+      "provider": "google",
+      "providers": [
+        "google"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.8
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "gemini-3.1-pro-preview",
+      "name": "Gemini 3.1 Pro",
+      "provider": "google",
+      "providers": [
+        "google"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.8
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "gemini-3.5-flash",
+      "name": "Gemini 3.5 Flash",
+      "provider": "google",
+      "providers": [
+        "google"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "minimal",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.6
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "gemini-3.6-flash",
+      "name": "Gemini 3.6 Flash",
+      "provider": "google",
+      "providers": [
+        "google"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.6,
+        "output_multiplier": 5
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "gemini-3.7-flash",
+      "name": "Gemini 3.7 Flash",
+      "provider": "google",
+      "providers": [
+        "google"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.6,
+        "output_multiplier": 5
+      },
+      "promotions": [
+        {
+          "discount": 0.5,
+          "starts_at": "2026-08-17T21:10:19Z",
+          "expires_at": "2027-01-01T00:00:00Z",
+          "label": "50% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gemini-3.8-flash",
+      "name": "Gemini 3.8 Flash",
+      "provider": "google",
+      "providers": [
+        "google"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.6,
+        "output_multiplier": 5
+      },
+      "promotions": [
+        {
+          "discount": 0.5,
+          "starts_at": "2026-08-17T21:10:19Z",
+          "expires_at": "2027-01-01T00:00:00Z",
+          "label": "50% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "glm-4.6",
+      "name": "GLM-4.6",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "baseten"
+      ],
+      "provider_models": {
+        "baseten": "zai-org/GLM-4.6"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "none"
+        ],
+        "default": "none"
+      },
+      "cost": {
+        "token_multiplier": 0.25
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "glm-4.7",
+      "name": "GLM-4.7",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks"
+      ],
+      "provider_models": {
+        "baseten": "zai-org/GLM-4.7",
+        "fireworks": "accounts/fireworks/models/glm-4p7"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "none"
+        ],
+        "default": "none"
+      },
+      "cost": {
+        "token_multiplier": 0.25
+      },
+      "deprecated_on": "2026-05-14",
+      "replacement": "glm-5.2",
+      "cli_visible": true
+    },
+    {
+      "id": "glm-5",
+      "name": "GLM-5",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks"
+      ],
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "none"
+        ],
+        "default": "none"
+      },
+      "cost": {
+        "token_multiplier": 0.4,
+        "output_multiplier": 3.2
+      },
+      "deprecated_on": "2026-04-24",
+      "replacement": "glm-5.2",
+      "cli_visible": true
+    },
+    {
+      "id": "glm-5.1",
+      "name": "GLM-5.1",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks",
+        "baseten"
+      ],
+      "provider_models": {
+        "baseten": "zai-org/GLM-5.1",
+        "fireworks": "accounts/fireworks/models/glm-5p1"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.55,
+        "output_multiplier": 3.2
+      },
+      "deprecated_on": "2026-07-27",
+      "replacement": "glm-5.2",
+      "cli_visible": true
+    },
+    {
+      "id": "glm-5.2",
+      "name": "GLM-5.2",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "baseten"
+      ],
+      "provider_models": {
+        "baseten": "zai-org/GLM-5.2",
+        "mistral": "zai-glm-5-2",
+        "together": "zai-org/GLM-5.2"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "high",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.56,
+        "output_multiplier": 3.15
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "glm-5.2-fast",
+      "name": "GLM-5.2 Fast",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "baseten"
+      ],
+      "provider_models": {
+        "baseten": "zai-org/GLM-5.2-Fast"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "high",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.84,
+        "output_multiplier": 3.2
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "glm-5.3",
+      "name": "GLM-5.3",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks",
+        "baseten",
+        "databricks"
+      ],
+      "provider_models": {
+        "baseten": "zai-org/GLM-5.3",
+        "databricks": "databricks-glm-5-3",
+        "fireworks": "accounts/fireworks/models/glm-5p3",
+        "mistral": "zai-glm-5-3"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "high",
+          "max"
+        ],
+        "default": "max"
+      },
+      "cost": {
+        "token_multiplier": 0.56,
+        "output_multiplier": 3.15
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "glm-5.3-flash",
+      "name": "GLM-5.3-Flash",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks",
+        "baseten",
+        "databricks"
+      ],
+      "provider_models": {
+        "baseten": "zai-org/GLM-5.3-Flash",
+        "databricks": "databricks-glm-5-3-flash",
+        "fireworks": "accounts/fireworks/models/glm-5p3-flash"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "high",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.06,
+        "output_multiplier": 3.34,
+        "cache_read_multiplier": 0.2
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5-2025-08-07",
+      "name": "GPT-5",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.5
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "gpt-5-codex",
+      "name": "GPT-5-Codex",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.5
+      },
+      "deprecated_on": "2026-07-23",
+      "replacement": "gpt-5.5",
+      "cli_visible": false
+    },
+    {
+      "id": "gpt-5-mini-2025-08-07",
+      "name": "GPT-5-mini",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.1
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "gpt-5-nano-2025-08-07",
+      "name": "GPT-5-nano",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.02
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "gpt-5.1",
+      "name": "GPT-5.1",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "none"
+      },
+      "cost": {
+        "token_multiplier": 0.5
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "gpt-5.1-codex",
+      "name": "GPT-5.1-Codex",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.5
+      },
+      "deprecated_on": "2026-07-23",
+      "replacement": "gpt-5.5",
+      "cli_visible": false
+    },
+    {
+      "id": "gpt-5.1-codex-max",
+      "name": "GPT-5.1-Codex-Max",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.5
+      },
+      "deprecated_on": "2026-07-23",
+      "replacement": "gpt-5.5",
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.2",
+      "name": "GPT-5.2",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "low"
+      },
+      "cost": {
+        "token_multiplier": 0.7
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.2-codex",
+      "name": "GPT-5.2-Codex",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.7
+      },
+      "deprecated_on": "2026-07-23",
+      "replacement": "gpt-5.5",
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.3-codex",
+      "name": "GPT-5.3-Codex",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.7
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.3-codex-fast",
+      "name": "GPT-5.3-Codex Fast Mode",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 1.4,
+        "output_multiplier": 8
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.4",
+      "name": "GPT-5.4",
+      "provider": "openai",
+      "providers": [
+        "openai",
+        "databricks"
+      ],
+      "provider_models": {
+        "bedrock_openai": "openai.gpt-5.4",
+        "databricks": "databricks-gpt-5-4"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 1,
+        "output_multiplier": 6
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.4-fast",
+      "name": "GPT-5.4 Fast Mode",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 2,
+        "output_multiplier": 6
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.4-mini",
+      "name": "GPT-5.4 Mini",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.3,
+        "output_multiplier": 6
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.4-mini-fast",
+      "name": "GPT-5.4 Mini Fast Mode",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.6,
+        "output_multiplier": 6
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.5",
+      "name": "GPT-5.5",
+      "provider": "openai",
+      "providers": [
+        "openai",
+        "databricks"
+      ],
+      "provider_models": {
+        "bedrock_openai": "openai.gpt-5.5",
+        "databricks": "databricks-gpt-5-5",
+        "snowflake": "openai-gpt-5.5"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 2,
+        "output_multiplier": 6
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.5-fast",
+      "name": "GPT-5.5 Fast Mode",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 5,
+        "output_multiplier": 6
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.5-pro",
+      "name": "GPT-5.5 Pro",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 12,
+        "output_multiplier": 6
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.6-luna",
+      "name": "GPT-5.6 Luna",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "bedrock_openai": "openai.gpt-5.6-luna",
+        "databricks": "databricks-gpt-5-6-luna",
+        "snowflake": "openai-gpt-5.6-luna"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.08,
+        "output_multiplier": 6
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.6-luna-flex",
+      "name": "GPT-5.6 Luna Flex",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "openai": "gpt-5.6-luna"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.04,
+        "output_multiplier": 6
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "gpt-5.6-sol",
+      "name": "GPT-5.6 Sol",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "bedrock_openai": "openai.gpt-5.6-sol",
+        "databricks": "databricks-gpt-5-6-sol",
+        "snowflake": "openai-gpt-5.6-sol"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 2,
+        "output_multiplier": 5
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        },
+        {
+          "discount": 0.2,
+          "starts_at": "2026-08-22T00:00:00Z",
+          "expires_at": "2026-11-22T00:00:00Z",
+          "label": "20% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.6-sol-fast",
+      "name": "GPT-5.6 Sol Fast Mode",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 4,
+        "output_multiplier": 5
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        },
+        {
+          "discount": 0.2,
+          "starts_at": "2026-08-22T00:00:00Z",
+          "expires_at": "2026-11-22T00:00:00Z",
+          "label": "20% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.6-terra",
+      "name": "GPT-5.6 Terra",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "bedrock_openai": "openai.gpt-5.6-terra",
+        "databricks": "databricks-gpt-5-6-terra",
+        "snowflake": "openai-gpt-5.6-terra"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.8,
+        "output_multiplier": 6
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-5.6-terra-flex",
+      "name": "GPT-5.6 Terra Flex",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "openai": "gpt-5.6-terra"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.4,
+        "output_multiplier": 6
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "gpt-6-astra",
+      "name": "GPT-6 Astra",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "bedrock_openai": "openai.gpt-6-astra",
+        "snowflake": "openai-gpt-6-astra"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 4,
+        "output_multiplier": 5
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-6-astra-flex",
+      "name": "GPT-6 Astra Flex",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "openai": "gpt-6-astra"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 2,
+        "output_multiplier": 5
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "gpt-6-luna",
+      "name": "GPT-6 Luna",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "bedrock_openai": "openai.gpt-6-luna"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.04,
+        "output_multiplier": 5
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-6-luna-flex",
+      "name": "GPT-6 Luna Flex",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "openai": "gpt-6-luna"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.02,
+        "output_multiplier": 5
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "gpt-6-sol",
+      "name": "GPT-6 Sol",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "bedrock_openai": "openai.gpt-6-sol"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.8,
+        "output_multiplier": 5
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-6-sol-flex",
+      "name": "GPT-6 Sol Flex",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "openai": "gpt-6-sol"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.4,
+        "output_multiplier": 5
+      },
+      "cli_visible": false
+    },
+    {
+      "id": "gpt-6.1-sol",
+      "name": "GPT-6.1 Sol",
+      "provider": "openai",
+      "providers": [
+        "openai",
+        "databricks"
+      ],
+      "provider_models": {
+        "bedrock_openai": "openai.gpt-6.1-sol",
+        "databricks": "databricks-gpt-6-1-sol"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.8,
+        "output_multiplier": 5,
+        "cache_read_multiplier": 0.05
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "grok-4.5",
+      "name": "Grok 4.5",
+      "provider": "xai",
+      "providers": [
+        "xai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.8,
+        "output_multiplier": 3,
+        "cache_read_multiplier": 0.15
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "grok-4.6",
+      "name": "Grok 4.6",
+      "provider": "xai",
+      "providers": [
+        "xai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.8,
+        "output_multiplier": 3,
+        "cache_read_multiplier": 0.25
+      },
+      "promotions": [
+        {
+          "discount": 0.6,
+          "starts_at": "2026-08-29T04:00:00Z",
+          "expires_at": "2026-09-05T02:00:00Z",
+          "label": "60% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "grok-4.7",
+      "name": "Grok 4.7",
+      "provider": "xai",
+      "providers": [
+        "xai"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.8,
+        "output_multiplier": 3,
+        "cache_read_multiplier": 0.25
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "inkling",
+      "name": "Inkling",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks"
+      ],
+      "provider_models": {
+        "fireworks": "accounts/fireworks/models/inkling"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.4,
+        "output_multiplier": 4.05,
+        "cache_read_multiplier": 0.17
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "kimi-k2.5",
+      "name": "Kimi K2.5",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks",
+        "baseten"
+      ],
+      "provider_models": {
+        "baseten": "moonshotai/Kimi-K2.5",
+        "fireworks": "accounts/fireworks/models/kimi-k2p5"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.25,
+        "output_multiplier": 5
+      },
+      "deprecated_on": "2026-06-26",
+      "cli_visible": true
+    },
+    {
+      "id": "kimi-k2.6",
+      "name": "Kimi K2.6",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks",
+        "baseten"
+      ],
+      "provider_models": {
+        "baseten": "moonshotai/Kimi-K2.6",
+        "fireworks": "accounts/fireworks/models/kimi-k2p6"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.4,
+        "output_multiplier": 4
+      },
+      "deprecated_on": "2026-09-25",
+      "cli_visible": false
+    },
+    {
+      "id": "kimi-k2.7-code",
+      "name": "Kimi K2.7 Code",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks",
+        "baseten"
+      ],
+      "provider_models": {
+        "baseten": "moonshotai/Kimi-K2.7-Code",
+        "fireworks": "accounts/fireworks/models/kimi-k2p7-code"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.38,
+        "output_multiplier": 4.21
+      },
+      "deprecated_on": "2026-09-25",
+      "cli_visible": false
+    },
+    {
+      "id": "kimi-k3",
+      "name": "Kimi K3",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks",
+        "baseten",
+        "databricks"
+      ],
+      "provider_models": {
+        "baseten": "moonshotai/Kimi-K3",
+        "databricks": "databricks-kimi-k3",
+        "fireworks": "accounts/fireworks/models/kimi-k3",
+        "together": "moonshotai/Kimi-K3"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "low",
+          "high",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 1.2,
+        "output_multiplier": 5
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "minimax-m2.5",
+      "name": "MiniMax M2.5",
+      "provider": "factory",
+      "api_model_provider": "anthropic",
+      "providers": [
+        "fireworks"
+      ],
+      "provider_models": {
+        "fireworks": "accounts/fireworks/models/minimax-m3"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.12,
+        "output_multiplier": 4
+      },
+      "deprecated_on": "2026-08-08",
+      "cli_visible": false
+    },
+    {
+      "id": "minimax-m2.7",
+      "name": "MiniMax M2.7",
+      "provider": "factory",
+      "api_model_provider": "anthropic",
+      "providers": [
+        "fireworks"
+      ],
+      "provider_models": {
+        "fireworks": "accounts/fireworks/models/minimax-m3"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.12,
+        "output_multiplier": 4
+      },
+      "deprecated_on": "2026-08-27",
+      "cli_visible": true
+    },
+    {
+      "id": "minimax-m3",
+      "name": "MiniMax M3",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks"
+      ],
+      "provider_models": {
+        "fireworks": "accounts/fireworks/models/minimax-m3",
+        "together": "MiniMaxAI/MiniMax-M3"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.12,
+        "output_multiplier": 4
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "mistral-large-4",
+      "name": "Mistral Large 4",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "mistral"
+      ],
+      "provider_models": {
+        "mistral": "mistral-large-4"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.544,
+        "output_multiplier": 3.08,
+        "cache_read_multiplier": 0.103
+      },
+      "promotions": [
+        {
+          "discount": 0.5,
+          "starts_at": "2026-10-06T00:00:00Z",
+          "expires_at": "2026-10-20T00:00:00Z",
+          "label": "50% off, launch discount"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "mistral-medium-3.5",
+      "name": "Mistral Medium 3.5",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "mistral"
+      ],
+      "provider_models": {
+        "mistral": "mistral-medium-3-5"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.6,
+        "output_multiplier": 5
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "nemotron-3-ultra",
+      "name": "Nemotron 3 Ultra",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "baseten",
+        "fireworks"
+      ],
+      "provider_models": {
+        "baseten": "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
+        "fireworks": "accounts/fireworks/models/nemotron-3-ultra-nvfp4"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.24,
+        "output_multiplier": 4
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "qwen3.8-max",
+      "name": "Qwen3.8 Max",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks"
+      ],
+      "provider_models": {
+        "fireworks": "accounts/fireworks/models/qwen3p8-max"
+      },
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "xhigh"
+        ],
+        "default": "xhigh"
+      },
+      "cost": {
+        "token_multiplier": 0.8,
+        "output_multiplier": 3
+      },
+      "cli_visible": true
+    }
+  ]
+}

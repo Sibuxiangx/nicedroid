@@ -80,21 +80,28 @@ func (m Model) CacheReadTokenMultiplier() float64 {
 	return defaultCacheReadMultiplier
 }
 
-// activePromoDiscount returns the promotional discount in effect right now,
-// or 0 when none applies.
+// activePromoDiscount returns the discount in effect right now, or 0 when none
+// applies.
+//
+// The registry keeps promotions after they lapse, so the window is evaluated
+// here at use time rather than filtered during extraction — which also means a
+// long-running process starts applying a discount the moment it begins.
 func (m Model) activePromoDiscount(now time.Time) float64 {
-	if m.PromotionDiscount <= 0 || m.PromotionStarts == "" || m.PromotionEnds == "" {
-		return 0
+	for _, p := range m.Promotions {
+		if p.Discount <= 0 || p.StartsAt == "" || p.ExpiresAt == "" {
+			continue
+		}
+		start, err1 := time.Parse(time.RFC3339, p.StartsAt)
+		end, err2 := time.Parse(time.RFC3339, p.ExpiresAt)
+		if err1 != nil || err2 != nil {
+			continue
+		}
+		if now.Before(start) || now.After(end) {
+			continue
+		}
+		return p.Discount
 	}
-	start, err1 := time.Parse(time.RFC3339, m.PromotionStarts)
-	end, err2 := time.Parse(time.RFC3339, m.PromotionEnds)
-	if err1 != nil || err2 != nil {
-		return 0
-	}
-	if now.Before(start) || now.After(end) {
-		return 0
-	}
-	return m.PromotionDiscount
+	return 0
 }
 
 // EstimateCredits computes Factory Standard Credits for one request, mirroring

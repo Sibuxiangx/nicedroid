@@ -1,0 +1,103 @@
+name: Refresh model catalog
+
+# Keeps manifest.json in step with the Droid CLI.
+#
+# The model catalog lives inside the CLI binary and no API serves it, so
+# refreshing means: notice a new version on npm, download that exact build,
+# re-extract the registry, cross-check it against the CLI's own model list, and
+# commit the result. Nothing here runs on a normal push.
+
+on:
+  schedule:
+    # Daily, a few minutes off the hour to stay clear of the busiest slots.
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Re-extract even when the version is unchanged
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-model-catalog
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Look up the latest CLI version
+        id: version
+        run: |
+          set -euo pipefail
+          latest=$(curl -fsSL https://registry.npmjs.org/@factory/cli/latest |
+            python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')
+          current=$(python3 -c 'import json; print(json.load(open("manifest.json"))["cli"]["version"])')
+          echo "manifest has $current, npm has $latest"
+          {
+            echo "latest=$latest"
+            if [ "$latest" = "$current" ] && [ "${{ inputs.force }}" != "true" ]; then
+              echo "changed=false"
+            else
+              echo "changed=true"
+            fi
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Download that CLI build
+        if: steps.version.outputs.changed == 'true'
+        env:
+          VER: ${{ steps.version.outputs.latest }}
+        run: |
+          set -euo pipefail
+          base="https://downloads.factory.ai/factory-cli/releases/$VER/linux/x64"
+          curl -fsSL -o /tmp/droid "$base/droid"
+          curl -fsSL -o /tmp/droid.sha256 "$base/droid.sha256"
+          (cd /tmp && printf '%s  droid\n' "$(cat droid.sha256)" | sha256sum -c -)
+          chmod +x /tmp/droid
+
+      - name: Re-extract the registry
+        if: steps.version.outputs.changed == 'true'
+        env:
+          VER: ${{ steps.version.outputs.latest }}
+        run: |
+          set -euo pipefail
+          # The CLI prints its own selectable models in its help text. That list
+          # is an independent statement of the catalog, so the extractor refuses
+          # to write a manifest missing any model the CLI names.
+          HOME="$(mktemp -d)" /tmp/droid exec --help > /tmp/help.txt
+          go run ./tools/extract-manifest /tmp/droid \
+            --version "$VER" \
+            --out manifest.json \
+            --cross-check /tmp/help.txt
+
+      - name: Confirm the gateway still builds and the manifest parses
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          go build ./...
+          go test ./internal/config/
+
+      - name: Commit the refreshed catalog
+        if: steps.version.outputs.changed == 'true'
+        env:
+          VER: ${{ steps.version.outputs.latest }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          if git diff --cached --quiet; then
+            echo "manifest already matches droid $VER"
+            exit 0
+          fi
+          git commit -m "Refresh model catalog to droid $VER"
+          git push

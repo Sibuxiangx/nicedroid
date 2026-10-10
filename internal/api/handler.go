@@ -48,10 +48,15 @@ func (h *Handler) Health(c echo.Context) error {
 }
 
 // ListModels returns the OpenAI-compatible model list.
+//
+// Retired models are listed too, so a client already using one can still see
+// it, but they carry deprecated/retired_on/replacement fields that clients can
+// filter on. The CLI's own picker hides them; see the admin console for the
+// same split.
 func (h *Handler) ListModels(c echo.Context) error {
 	var data []map[string]any
 	for _, m := range config.Catalog {
-		data = append(data, map[string]any{
+		entry := map[string]any{
 			"id":                m.ID,
 			"object":            "model",
 			"created":           nowUnix(),
@@ -62,7 +67,18 @@ func (h *Handler) ListModels(c echo.Context) error {
 			"passthrough":       m.Passthrough,
 			"vision":            m.Vision,
 			"reasoning_efforts": m.ReasoningEfforts,
-		})
+			"providers":         m.AvailableProviders(),
+		}
+		if m.DeprecatedOn != "" || !m.CLIVisible {
+			entry["deprecated"] = true
+		}
+		if m.DeprecatedOn != "" {
+			entry["retired_on"] = m.DeprecatedOn
+		}
+		if m.Replacement != "" {
+			entry["replacement"] = m.Replacement
+		}
+		data = append(data, entry)
 	}
 	return c.JSON(http.StatusOK, map[string]any{"object": "list", "data": data})
 }

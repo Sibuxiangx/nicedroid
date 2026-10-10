@@ -104,6 +104,7 @@ func main() {
 
 	go func() {
 		log.Printf("listening on %s (upstream: %s, db: %s)", cfg.Listen, cfg.UpstreamBaseURL, cfg.DBPath)
+		log.Printf("%s; identifying as %s", config.ManifestSummary(), config.ManifestUserAgent())
 		if err := e.Start(cfg.Listen); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server error: %v", err)
 		}

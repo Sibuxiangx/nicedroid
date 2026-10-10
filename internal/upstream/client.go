@@ -71,12 +71,16 @@ type Request struct {
 }
 
 // buildHeaders assembles the minimal header set the gateway requires.
+//
+// The user agent and client version come from the embedded manifest rather than
+// being written here, so refreshing the catalog after a CLI release also moves
+// the version this proxy claims to be.
 func (c *Client) buildHeaders(req *http.Request, apiKey, provider, sessionID string) {
 	h := req.Header
 	h.Set("authorization", "Bearer "+apiKey)
 	h.Set("content-type", "application/json")
 	h.Set("accept", "application/json")
-	h.Set("user-agent", "factory-cli/0.237.0")
+	h.Set("user-agent", config.ManifestUserAgent())
 	h.Set("x-api-provider", provider)
 	if sessionID == "" {
 		sessionID = uuid.NewString()
@@ -84,7 +88,7 @@ func (c *Client) buildHeaders(req *http.Request, apiKey, provider, sessionID str
 	h.Set("x-session-id", sessionID)
 	h.Set("x-assistant-message-id", uuid.NewString())
 	h.Set("x-factory-client", "cli")
-	h.Set("x-client-version", "0.237.0")
+	h.Set("x-client-version", config.ManifestVersion())
 }
 
 // Do sends an upstream request and returns the raw response. The caller owns
@@ -106,7 +110,7 @@ func (c *Client) Limits(ctx context.Context, apiKey string) (*Limits, error) {
 		return nil, err
 	}
 	req.Header.Set("authorization", "Bearer "+apiKey)
-	req.Header.Set("user-agent", "factory-cli/0.237.0")
+	req.Header.Set("user-agent", config.ManifestUserAgent())
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
 		return nil, err
@@ -133,7 +137,7 @@ func (c *Client) VerifyKey(ctx context.Context, apiKey string) error {
 		return err
 	}
 	req.Header.Set("authorization", "Bearer "+apiKey)
-	req.Header.Set("user-agent", "factory-cli/0.237.0")
+	req.Header.Set("user-agent", config.ManifestUserAgent())
 	req.Header.Set("x-factory-whoami-extended", "true")
 	resp, err := c.HTTP.Do(req)
 	if err != nil {

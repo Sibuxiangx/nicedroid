@@ -122,26 +122,67 @@ curl http://localhost:3000/v1/responses \
 
 ## Models
 
-**Standard pool** — Claude Opus 5 / Sonnet 5 / Haiku, GPT-6 and GPT-5.4 families,
-Gemini 3 Pro and Flash (Gemini is passthrough-only, see below).
+The catalog is not maintained here by hand. [`manifest.json`](manifest.json) is
+the source of truth — 93 models at the time of writing — extracted from the Droid
+CLI's own model registry, and the Go binary embeds that file at build time.
 
-**Droid Core pool** — the cheap open-weight models, several of which are served
-by multiple backends:
+Each entry carries everything needed to route and price a request:
 
-| Model                 | Providers                        |
-| --------------------- | -------------------------------- |
-| `glm-5.3`             | fireworks, baseten, databricks   |
-| `glm-5.3-flash`       | fireworks, baseten, databricks   |
-| `kimi-k3`             | fireworks, baseten, databricks   |
-| `deepseek-v4.1-flash` | fireworks, baseten, databricks   |
-| `nemotron-3-ultra`    | baseten, fireworks               |
-| `qwen3.8-max`         | fireworks                        |
-| `inkling`             | fireworks                        |
-| `minimax-m3`          | fireworks                        |
-| `mistral-large-4`     | mistral                          |
+```json
+{
+  "id": "glm-5.3-flash",
+  "name": "GLM-5.3-Flash",
+  "provider": "factory",
+  "providers": ["fireworks", "baseten", "databricks"],
+  "quota_pool": "core",
+  "vision": true,
+  "reasoning": { "efforts": ["low", "high", "max"], "default": "high" },
+  "cost": {
+    "token_multiplier": 0.06,
+    "output_multiplier": 3.34,
+    "cache_read_multiplier": 0.2
+  }
+}
+```
 
-`GET /v1/models` and the admin console list the live catalog with vision support,
-reasoning-effort levels and cost multipliers.
+`provider` names the platform that serves the model; `providers` lists the
+backends the gateway can dispatch to. They differ for open-weight models, which
+belong to Factory but are served by fireworks, baseten, databricks or mistral.
+Cloud marketplace transports (`azure_openai`, `bedrock_anthropic`, …) are not
+routable with `x-api-provider` and are filtered out during extraction.
+
+Two quota pools exist: **standard** (Claude, GPT, Gemini, Grok) and **core** (the
+cheap open-weight models, several of which are served by more than one backend).
+Gemini models are passthrough-only: reachable through `/v1/generate` and never
+translated.
+
+The admin console groups models by platform and collapses the ones the CLI has
+retired — 59 current models and 34 legacy ones at the time of writing. A model is
+legacy when the registry gives it a retirement date or hides it from the CLI's
+own picker; the console shows both the date and the suggested replacement.
+`GET /v1/models` lists retired models too, flagged with `deprecated`,
+`retired_on` and `replacement`, so an existing client can still see what it is
+calling and filter accordingly.
+
+### Keeping the catalog current
+
+The catalog ships inside the Droid CLI, so that is what `manifest.json` tracks.
+The [refresh workflow](.github/workflows/update-models.yml) checks npm for a new
+`@factory/cli` version every day; when one appears it downloads that exact build,
+verifies its SHA-256, re-extracts the registry and commits the result. A new
+model therefore appears here without anyone editing Go or Markdown.
+
+To do the same by hand:
+
+```bash
+go run ./tools/extract-manifest ~/.local/bin/droid \
+  --version "$(droid --version)" \
+  --out manifest.json
+```
+
+The extractor validates its own work: it refuses to write a manifest that is
+missing models the CLI lists in its own `droid exec --help`, so a change in the
+bundle layout fails the job instead of quietly shrinking the catalog.
 
 ## Provider selection
 

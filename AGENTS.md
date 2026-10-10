@@ -57,17 +57,72 @@ These are load-bearing. Getting one wrong makes every upstream request fail.
   wire formats and never participate in interchange; they are reachable only
   through `/v1/generate`, which forwards the payload verbatim.
 
+## The model catalog is generated, not written
+
+`manifest.json` is the source of truth for every model: ids, providers, quota
+pools, vision support, reasoning efforts, cost multipliers and promotions. The Go
+binary embeds it (`manifest_embed.go`) and `internal/config/manifest.go`
+translates it into `Model` values at startup. `internal/config/models.go` holds
+only the `Model` type and the lookup helpers.
+
+Do not add a model by editing Go. Extract it:
+
+```bash
+go run ./tools/extract-manifest ~/.local/bin/droid \
+  --version "$(droid --version)" --out manifest.json
+```
+
+`tools/extract-manifest` parses the model registry out of the minified bundle
+compiled into the CLI binary, because no API serves it. Two consequences worth
+knowing before you touch it:
+
+- **Field order is not stable** between registry entries, so the parser anchors on
+  the map key (`"model-id":{id:"model-id",`) and brace-matches the value. Do not
+  add a regex that assumes a field order.
+- **Some values are JS identifiers, not literals** (`apiProviders:N`,
+  `cost:{promotions:[Mt]}`). These are resolved only when exactly one
+  unambiguous definition exists, and otherwise reported as missing. Never guess.
+
+The extractor validates its own output and refuses to write a manifest that is
+missing models the CLI lists in `droid exec --help` (`--cross-check`), and it
+checks that it agrees with the CLI about which models are retired. It also skips
+`auto` / `auto-fast` on purpose: those are server-side router entries, not models,
+and the gateway cannot describe, route or benchmark them.
+
+Two distinctions in the data are easy to get wrong:
+
+- **Platform vs backend.** `provider` is the platform serving the model
+  (`factory`, `anthropic`, `openai`, `google`, `xai`); `providers` is the list of
+  backends the gateway can dispatch to with `x-api-provider`. For open-weight
+  models these differ: `glm-5.3-flash` is `provider: "factory"` with
+  `providers: ["fireworks","baseten","databricks"]`. Collapsing them puts
+  Factory models under a "fireworks" heading in the UI and breaks the
+  per-platform cost defaults in `cost.go`.
+- **Current vs retired.** A model is retired when the registry gives it a
+  `deprecation.date` or hides it with `availableInCLI:!1`. The admin console
+  collapses retired models; `GET /v1/models` lists them with a `deprecated` flag.
+  The two signals do not overlap — most hidden models carry no date.
+
+`.github/workflows/update-models.yml` runs this daily: it reads the latest
+`@factory/cli` version from npm, downloads that build, verifies its SHA-256,
+re-extracts, and commits. The CLI version in the manifest is also the version the
+proxy identifies itself as upstream (`config.ManifestVersion()`), so refreshing
+the catalog is what moves the gateway onto a newer CLI release.
+
 ## Layout
 
 ```
+manifest.json        generated model catalog — the source of truth for every model
+tools/               extract-manifest: builds manifest.json from a Droid CLI binary
 cmd/server/          entry point (Echo, routes, background jobs)
-internal/config/     env config, model catalog, provider capability table, cost model
+internal/config/     env config, manifest decoding, provider capability table, cost model
 internal/store/      SQLite: upstream keys, client keys, request logs, settings, migrations
 internal/upstream/   gateway client + request translation into each wire format
 internal/router/     quota polling and weighted key selection
 internal/api/        proxy endpoints, SSE converters (all format pairs), usage capture
 internal/admin/      admin JSON API, provider pinning, streaming benchmark, JWT auth
 web/                 embedded admin UI (React + Vite + shadcn/ui); web/dist is committed
+.github/workflows/   daily refresh of the model catalog
 ```
 
 ## Build and run
@@ -97,7 +152,13 @@ everything mutable at runtime lives in SQLite and is edited from the admin UI.
 
 ## Verifying changes
 
-There is no test suite. Verify by running the server and exercising it:
+The catalog has tests; run them first, since they guard the embedded manifest:
+
+```bash
+go test ./...
+```
+
+Beyond that there is no test suite. Verify by running the server and exercising it:
 
 ```bash
 curl -s localhost:3000/healthz

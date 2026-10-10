@@ -139,6 +139,13 @@ export interface ModelView {
   current_provider: string
   pinned_provider: string
   provider_count: number
+  // Copied from the CLI registry. `cli_visible` is false for entries the CLI no
+  // longer offers; `deprecated_on` is the retirement date the registry records.
+  service_tier?: string
+  cli_visible: boolean
+  deprecated_on?: string
+  replacement?: string
+  promotions?: { discount: number; starts_at: string; expires_at: string; label: string }[]
 }
 
 export interface RequestLog {
