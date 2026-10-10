@@ -28,14 +28,11 @@ export function Login({ onSuccess }: { onSuccess: (username: string) => void }) 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40">
       <Card className="w-full max-w-sm">
-        <CardHeader className="items-center text-center">
-          <img
-            src="/logo.webp"
-            alt=""
-            width={64}
-            height={64}
-            className="mb-1 h-16 w-16 rounded-xl"
-          />
+        {/* CardHeader is a grid, so centring needs justify-items (cross axis);
+            items-center alone would leave the img at the start because a
+            replaced element does not stretch to fill its cell. */}
+        <CardHeader className="justify-items-center gap-2 text-center">
+          <img src="/logo.webp" alt="" width={64} height={64} className="h-16 w-16 rounded-xl" />
           <CardTitle className="text-2xl">nicedroid</CardTitle>
           <CardDescription>管理控制台登录</CardDescription>
         </CardHeader>
