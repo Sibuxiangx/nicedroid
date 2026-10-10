@@ -56,6 +56,13 @@ These are load-bearing. Getting one wrong makes every upstream request fail.
 - **Gemini is passthrough-only.** `gemini-*` models are never translated between
   wire formats and never participate in interchange; they are reachable only
   through `/v1/generate`, which forwards the payload verbatim.
+- **Proxy auth is default-deny.** `/v1/*` refuses every request until an enabled
+  client key exists, because those endpoints spend the operator's upstream
+  quota. An earlier revision served them openly when no keys were configured,
+  which is harmless on localhost and an open relay on a public host. Do not
+  restore that: an unconfigured deployment must fail closed. The admin console
+  keeps its own JWT auth and is deliberately not behind this middleware, so the
+  first key can always be created there.
 
 ## The model catalog is generated, not written
 

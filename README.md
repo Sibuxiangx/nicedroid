@@ -83,8 +83,11 @@ go build -o nicedroid ./cmd/server
 ## Usage
 
 Once an upstream key is configured, downstream clients authenticate with a
-client key created in the admin console (`sk-nicedroid-…`). They are optional:
-with no client keys defined, `/v1/*` is open.
+client key created in the admin console (`sk-nicedroid-…`). Authentication is
+**default-deny**: these endpoints spend your upstream quota, so the proxy refuses
+every request until at least one client key exists rather than serving them
+openly. The admin console has its own credentials and stays reachable, so that
+is where you create the first key.
 
 **OpenAI-compatible:**
 

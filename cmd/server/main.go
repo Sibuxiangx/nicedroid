@@ -81,7 +81,8 @@ func main() {
 		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodOptions},
 	}))
 
-	// Proxy API (client-key auth applies when keys exist).
+	// Proxy API. Client-key auth is required: with no enabled client key the
+	// middleware refuses requests rather than serving the upstream quota openly.
 	g := e.Group("")
 	g.Use(proxy.AuthMiddleware)
 	g.GET("/v1/models", proxy.ListModels)
