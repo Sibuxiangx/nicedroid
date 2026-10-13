@@ -2,8 +2,8 @@
   "schema": 1,
   "source": "droid-cli",
   "cli": {
-    "version": "0.238.0",
-    "user_agent": "factory-cli/0.238.0"
+    "version": "0.240.0",
+    "user_agent": "factory-cli/0.240.0"
   },
   "models": [
     {
@@ -2245,6 +2245,36 @@
         "output_multiplier": 5
       },
       "cli_visible": false
+    },
+    {
+      "id": "gpt-6-astra-ultrafast",
+      "name": "GPT-6 Astra Ultra Fast",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "openai": "gpt-6-astra"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 24,
+        "output_multiplier": 5
+      },
+      "cli_visible": true
     },
     {
       "id": "gpt-6-luna",
