@@ -2,8 +2,8 @@
   "schema": 1,
   "source": "droid-cli",
   "cli": {
-    "version": "0.240.0",
-    "user_agent": "factory-cli/0.240.0"
+    "version": "0.241.1",
+    "user_agent": "factory-cli/0.241.1"
   },
   "models": [
     {
@@ -1112,7 +1112,7 @@
         {
           "discount": 0.5,
           "starts_at": "2026-08-17T21:10:19Z",
-          "expires_at": "2027-01-01T00:00:00Z",
+          "expires_at": "2027-01-01T08:00:00Z",
           "label": "50% off"
         }
       ],
@@ -1145,7 +1145,41 @@
         {
           "discount": 0.5,
           "starts_at": "2026-08-17T21:10:19Z",
-          "expires_at": "2027-01-01T00:00:00Z",
+          "expires_at": "2027-01-01T08:00:00Z",
+          "label": "50% off"
+        }
+      ],
+      "cli_visible": true
+    },
+    {
+      "id": "gemini-4-argon",
+      "name": "Gemini 4 Argon",
+      "provider": "google",
+      "providers": [
+        "google"
+      ],
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 1.6,
+        "output_multiplier": 5,
+        "cache_read_multiplier": 0.05
+      },
+      "promotions": [
+        {
+          "discount": 0.5,
+          "starts_at": "2026-10-13T16:00:00Z",
+          "expires_at": "2026-12-01T08:00:00Z",
           "label": "50% off"
         }
       ],
@@ -2839,6 +2873,37 @@
       "cost": {
         "token_multiplier": 0.6,
         "output_multiplier": 5
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "muse-spark-1.2",
+      "name": "Muse Spark 1.2",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "fireworks"
+      ],
+      "provider_models": {
+        "fireworks": "accounts/fireworks/models/muse-spark-1p2-open"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": false,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.5,
+        "output_multiplier": 3.4,
+        "cache_read_multiplier": 0.12
       },
       "cli_visible": true
     },
