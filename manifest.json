@@ -2,8 +2,8 @@
   "schema": 1,
   "source": "droid-cli",
   "cli": {
-    "version": "0.241.1",
-    "user_agent": "factory-cli/0.241.1"
+    "version": "0.242.0",
+    "user_agent": "factory-cli/0.242.0"
   },
   "models": [
     {
@@ -2342,6 +2342,37 @@
       "cli_visible": true
     },
     {
+      "id": "gpt-6-luna-fast",
+      "name": "GPT-6 Luna Fast Mode",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "openai": "gpt-6-luna"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 0.08,
+        "output_multiplier": 5
+      },
+      "cli_visible": true
+    },
+    {
       "id": "gpt-6-luna-flex",
       "name": "GPT-6 Luna Flex",
       "provider": "openai",
@@ -2399,6 +2430,37 @@
       },
       "cost": {
         "token_multiplier": 0.8,
+        "output_multiplier": 5
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-6-sol-fast",
+      "name": "GPT-6 Sol Fast Mode",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "openai": "gpt-6-sol"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 1.6,
         "output_multiplier": 5
       },
       "cli_visible": true
@@ -2462,6 +2524,37 @@
       },
       "cost": {
         "token_multiplier": 0.8,
+        "output_multiplier": 5,
+        "cache_read_multiplier": 0.05
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "gpt-6.1-sol-ultrafast",
+      "name": "GPT-6.1 Sol Ultra Fast",
+      "provider": "openai",
+      "providers": [
+        "openai"
+      ],
+      "provider_models": {
+        "openai": "gpt-6.1-sol"
+      },
+      "quota_pool": "standard",
+      "service_tier": "premium",
+      "vision": true,
+      "pdf": true,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "cost": {
+        "token_multiplier": 4.8,
         "output_multiplier": 5,
         "cache_read_multiplier": 0.05
       },
