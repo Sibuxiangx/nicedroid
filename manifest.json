@@ -2,8 +2,8 @@
   "schema": 1,
   "source": "droid-cli",
   "cli": {
-    "version": "0.242.0",
-    "user_agent": "factory-cli/0.242.0"
+    "version": "0.243.0",
+    "user_agent": "factory-cli/0.243.0"
   },
   "models": [
     {
@@ -3001,6 +3001,38 @@
       "cli_visible": true
     },
     {
+      "id": "muse-spark-open",
+      "name": "Muse Spark Open",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "baseten"
+      ],
+      "provider_models": {
+        "baseten": "meta-models/muse-spark-open"
+      },
+      "quota_pool": "standard",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.5,
+        "output_multiplier": 3.4,
+        "cache_read_multiplier": 0.12
+      },
+      "cli_visible": true
+    },
+    {
       "id": "nemotron-3-ultra",
       "name": "Nemotron 3 Ultra",
       "provider": "factory",
@@ -3027,6 +3059,32 @@
       "cost": {
         "token_multiplier": 0.24,
         "output_multiplier": 4
+      },
+      "cli_visible": true
+    },
+    {
+      "id": "nemotron-3.5-super",
+      "name": "Nemotron 3.5 Super",
+      "provider": "factory",
+      "api_model_provider": "generic-chat-completion-api",
+      "providers": [
+        "baseten"
+      ],
+      "quota_pool": "core",
+      "service_tier": "standard",
+      "vision": true,
+      "pdf": false,
+      "reasoning": {
+        "efforts": [
+          "off",
+          "high"
+        ],
+        "default": "high"
+      },
+      "cost": {
+        "token_multiplier": 0.08,
+        "output_multiplier": 2.5,
+        "cache_read_multiplier": 0.2
       },
       "cli_visible": true
     },
