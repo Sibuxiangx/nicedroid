@@ -2,8 +2,8 @@
   "schema": 1,
   "source": "droid-cli",
   "cli": {
-    "version": "0.244.0",
-    "user_agent": "factory-cli/0.244.0"
+    "version": "0.245.0",
+    "user_agent": "factory-cli/0.245.0"
   },
   "models": [
     {
